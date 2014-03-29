@@ -1,15 +1,19 @@
 '''
 This is the Modular EEg Toolkit (MEET) for Python 2.
 
-*****************************************************************************************************
-***Disclosure:                                                                                    ***
-***-----------                                                                                    ***
-***This software comes as it is - there might be errors at runtime and results might be wrong     ***
-***although the code was tested and did work as expected.                                         ***
-***Since resuluts might be wrong you must absolutely not use this software for a medical purpuse -***
-***decisions converning diagnosis, treatment or prophylaxis of any medical condition mustn't rely ***
-***on this software.                                                                              ***
-*****************************************************************************************************
+**********************************************************
+*** Disclosure:                                        ***                                            
+*** -----------                                        ***                                            
+*** This software comes as it is - there might be      ***
+*** errors at runtime and results might be wrong       ***
+*** although the code was tested and did work as       ***
+*** expected.                                          ***
+*** Since resuluts might be wrong you must absolutely  ***
+*** not use this software for a medical purpuse -      ***
+*** decisions converning diagnosis, treatment or       ***
+*** prophylaxis of any medical condition mustn't rely  ***
+*** on this software.                                  ***                                            
+**********************************************************
 
 Only Python 2 is supported at the moment, however modifications should be easy to do.
 
