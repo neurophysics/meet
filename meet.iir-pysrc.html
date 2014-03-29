@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>meet.iir</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="meet-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        <a href="meet-module.html">Package&nbsp;meet</a> ::
+        Module&nbsp;iir
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="meet.iir-pysrc.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<h1 class="epydoc">Source Code for <a href="meet.iir-module.html">Module meet.iir</a></h1>
+<pre class="py-src">
+<a name="L1"></a><tt class="py-lineno"> 1</tt>  <tt class="py-line"><tt class="py-docstring">'''</tt> </tt>
+<a name="L2"></a><tt class="py-lineno"> 2</tt>  <tt class="py-line"><tt class="py-docstring">IIR Filtering</tt> </tt>
+<a name="L3"></a><tt class="py-lineno"> 3</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L4"></a><tt class="py-lineno"> 4</tt>  <tt class="py-line"><tt class="py-docstring">Submodule of the Modular EEg Toolkit - MEET for Python.</tt> </tt>
+<a name="L5"></a><tt class="py-lineno"> 5</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L6"></a><tt class="py-lineno"> 6</tt>  <tt class="py-line"><tt class="py-docstring">So far only butterworth filtering is implemented</tt> </tt>
+<a name="L7"></a><tt class="py-lineno"> 7</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L8"></a><tt class="py-lineno"> 8</tt>  <tt class="py-line"><tt class="py-docstring">Author:</tt> </tt>
+<a name="L9"></a><tt class="py-lineno"> 9</tt>  <tt class="py-line"><tt class="py-docstring">-------</tt> </tt>
+<a name="L10"></a><tt class="py-lineno">10</tt>  <tt class="py-line"><tt class="py-docstring">Gunnar Waterstraat</tt> </tt>
+<a name="L11"></a><tt class="py-lineno">11</tt>  <tt class="py-line"><tt class="py-docstring">gunnar[dot]waterstraat[at]charite.de</tt> </tt>
+<a name="L12"></a><tt class="py-lineno">12</tt>  <tt class="py-line"><tt class="py-docstring">'''</tt> </tt>
+<a name="L13"></a><tt class="py-lineno">13</tt>  <tt class="py-line"> </tt>
+<a name="L14"></a><tt class="py-lineno">14</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-name">__future__</tt> <tt class="py-keyword">import</tt> <tt class="py-name">division</tt> </tt>
+<a name="L15"></a><tt class="py-lineno">15</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-op">.</tt> <tt class="py-keyword">import</tt> <tt class="py-name">_np</tt> </tt>
+<a name="L16"></a><tt class="py-lineno">16</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-op">.</tt> <tt class="py-keyword">import</tt> <tt class="py-name">_signal</tt> </tt>
+<a name="L17"></a><tt class="py-lineno">17</tt>  <tt class="py-line"> </tt>
+<a name="butterworth"></a><div id="butterworth-def"><a name="L18"></a><tt class="py-lineno">18</tt> <a class="py-toggle" href="#" id="butterworth-toggle" onclick="return toggle('butterworth');">-</a><tt class="py-line"><tt class="py-keyword">def</tt> <a class="py-def-name" href="meet.iir-module.html#butterworth">butterworth</a><tt class="py-op">(</tt><tt class="py-param">data</tt><tt class="py-op">,</tt> <tt class="py-param">fp</tt><tt class="py-op">,</tt> <tt class="py-param">fs</tt><tt class="py-op">,</tt> <tt class="py-param">s_rate</tt><tt class="py-op">,</tt> <tt class="py-param">gpass</tt><tt class="py-op">=</tt><tt class="py-number">3</tt><tt class="py-op">,</tt> <tt class="py-param">gstop</tt><tt class="py-op">=</tt><tt class="py-number">8</tt><tt class="py-op">,</tt> <tt class="py-param">axis</tt><tt class="py-op">=</tt><tt class="py-op">-</tt><tt class="py-number">1</tt><tt class="py-op">,</tt> <tt class="py-param">zero_phase</tt> <tt class="py-op">=</tt> <tt class="py-name">True</tt><tt class="py-op">,</tt> <tt class="py-param">return_param</tt><tt class="py-op">=</tt><tt class="py-name">False</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="butterworth-collapsed" style="display:none;" pad="++" indent="++++"></div><div id="butterworth-expanded"><a name="L19"></a><tt class="py-lineno">19</tt>  <tt class="py-line">    <tt class="py-docstring">'''</tt> </tt>
+<a name="L20"></a><tt class="py-lineno">20</tt>  <tt class="py-line"><tt class="py-docstring">    Apply a butterworth filter to the data.</tt> </tt>
+<a name="L21"></a><tt class="py-lineno">21</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L22"></a><tt class="py-lineno">22</tt>  <tt class="py-line"><tt class="py-docstring">    fp is the passband frequency in Hz</tt> </tt>
+<a name="L23"></a><tt class="py-lineno">23</tt>  <tt class="py-line"><tt class="py-docstring">    fs is the stopband frequency in Hz</tt> </tt>
+<a name="L24"></a><tt class="py-lineno">24</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L25"></a><tt class="py-lineno">25</tt>  <tt class="py-line"><tt class="py-docstring">    Example of Notations:</tt> </tt>
+<a name="L26"></a><tt class="py-lineno">26</tt>  <tt class="py-line"><tt class="py-docstring">    ---------------------</tt> </tt>
+<a name="L27"></a><tt class="py-lineno">27</tt>  <tt class="py-line"><tt class="py-docstring">    For fs = 10, fp = 15 a high-pass filter is applied with the transition band between 10-15 Hz</tt> </tt>
+<a name="L28"></a><tt class="py-lineno">28</tt>  <tt class="py-line"><tt class="py-docstring">    For fs = 15, fp = 10 a low-pass filter is applied with the transition band between 10-15 Hz</tt> </tt>
+<a name="L29"></a><tt class="py-lineno">29</tt>  <tt class="py-line"><tt class="py-docstring">    For fs = [10, 40], fp = [20,30] a bandpass-filter with the passband 20-30 Hz and transitions</tt> </tt>
+<a name="L30"></a><tt class="py-lineno">30</tt>  <tt class="py-line"><tt class="py-docstring">                                    between 10-20 Hz and 30-40 Hz is applied</tt> </tt>
+<a name="L31"></a><tt class="py-lineno">31</tt>  <tt class="py-line"><tt class="py-docstring">    For fs = [20, 30], fp = [10,40] a bandstop-filter with the stopband 20-30 Hz and transitions</tt> </tt>
+<a name="L32"></a><tt class="py-lineno">32</tt>  <tt class="py-line"><tt class="py-docstring">                                    between 10-20 Hz and 30-40 Hz is applied</tt> </tt>
+<a name="L33"></a><tt class="py-lineno">33</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L34"></a><tt class="py-lineno">34</tt>  <tt class="py-line"><tt class="py-docstring">    Input:</tt> </tt>
+<a name="L35"></a><tt class="py-lineno">35</tt>  <tt class="py-line"><tt class="py-docstring">    ------</tt> </tt>
+<a name="L36"></a><tt class="py-lineno">36</tt>  <tt class="py-line"><tt class="py-docstring">    -- data - numpy array</tt> </tt>
+<a name="L37"></a><tt class="py-lineno">37</tt>  <tt class="py-line"><tt class="py-docstring">    -- fp - float - pass-band frequencies</tt> </tt>
+<a name="L38"></a><tt class="py-lineno">38</tt>  <tt class="py-line"><tt class="py-docstring">    -- fs - float - stop-band frequencies</tt> </tt>
+<a name="L39"></a><tt class="py-lineno">39</tt>  <tt class="py-line"><tt class="py-docstring">    -- s_rate - float - the sampling rate in Hz</tt> </tt>
+<a name="L40"></a><tt class="py-lineno">40</tt>  <tt class="py-line"><tt class="py-docstring">    -- gpass - float - maximal attenuation in the passband (in dB)</tt> </tt>
+<a name="L41"></a><tt class="py-lineno">41</tt>  <tt class="py-line"><tt class="py-docstring">    -- gstop - float - minimal attenuation in the passband (in dB)</tt> </tt>
+<a name="L42"></a><tt class="py-lineno">42</tt>  <tt class="py-line"><tt class="py-docstring">    -- axis - int -along which axis the filter is applied</tt> </tt>
+<a name="L43"></a><tt class="py-lineno">43</tt>  <tt class="py-line"><tt class="py-docstring">    -- zero_phase - bool - if zero phase filter is applied by filtering in both directions</tt> </tt>
+<a name="L44"></a><tt class="py-lineno">44</tt>  <tt class="py-line"><tt class="py-docstring">    -- return_param - bool - if the order, b, and a shoud be returned</tt> </tt>
+<a name="L45"></a><tt class="py-lineno">45</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L46"></a><tt class="py-lineno">46</tt>  <tt class="py-line"><tt class="py-docstring">    Output:</tt> </tt>
+<a name="L47"></a><tt class="py-lineno">47</tt>  <tt class="py-line"><tt class="py-docstring">    -------</tt> </tt>
+<a name="L48"></a><tt class="py-lineno">48</tt>  <tt class="py-line"><tt class="py-docstring">    -- data - numpy array - the filtered data array</tt> </tt>
+<a name="L49"></a><tt class="py-lineno">49</tt>  <tt class="py-line"><tt class="py-docstring">    if return_param:</tt> </tt>
+<a name="L50"></a><tt class="py-lineno">50</tt>  <tt class="py-line"><tt class="py-docstring">       -- data</tt> </tt>
+<a name="L51"></a><tt class="py-lineno">51</tt>  <tt class="py-line"><tt class="py-docstring">       -- ord - int - filter order (this must be doubled for the zero_phase implementation)</tt> </tt>
+<a name="L52"></a><tt class="py-lineno">52</tt>  <tt class="py-line"><tt class="py-docstring">       -- (b, a) - Numerator (`b`) and denominator (`a`) polynomials of the IIR filter.</tt> </tt>
+<a name="L53"></a><tt class="py-lineno">53</tt>  <tt class="py-line"><tt class="py-docstring">    '''</tt> </tt>
+<a name="L54"></a><tt class="py-lineno">54</tt>  <tt class="py-line">    <tt class="py-comment"># get filter parameters</tt> </tt>
+<a name="L55"></a><tt class="py-lineno">55</tt>  <tt class="py-line">    <tt class="py-name">wp</tt><tt class="py-op">,</tt> <tt class="py-name">ws</tt><tt class="py-op">,</tt> <tt class="py-name">ftype</tt> <tt class="py-op">=</tt> <tt id="link-0" class="py-name" targets="Function meet.iir._preparefilter()=meet.iir-module.html#_preparefilter"><a title="meet.iir._preparefilter" class="py-name" href="#" onclick="return doclink('link-0', '_preparefilter', 'link-0');">_preparefilter</a></tt><tt class="py-op">(</tt><tt class="py-name">fp</tt><tt class="py-op">,</tt> <tt class="py-name">fs</tt><tt class="py-op">,</tt> <tt class="py-name">s_rate</tt><tt class="py-op">)</tt> </tt>
+<a name="L56"></a><tt class="py-lineno">56</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt class="py-name">zero_phase</tt> <tt class="py-op">==</tt> <tt class="py-name">True</tt><tt class="py-op">:</tt> </tt>
+<a name="L57"></a><tt class="py-lineno">57</tt>  <tt class="py-line">        <tt class="py-name">gpass</tt> <tt class="py-op">=</tt> <tt class="py-name">gpass</tt> <tt class="py-op">/</tt> <tt class="py-number">2.</tt> <tt class="py-comment"># half for filtering in both directions</tt> </tt>
+<a name="L58"></a><tt class="py-lineno">58</tt>  <tt class="py-line">        <tt class="py-name">gstop</tt> <tt class="py-op">=</tt> <tt class="py-name">gstop</tt> <tt class="py-op">/</tt> <tt class="py-number">2.</tt> </tt>
+<a name="L59"></a><tt class="py-lineno">59</tt>  <tt class="py-line">        <tt class="py-name">filt</tt> <tt class="py-op">=</tt> <tt class="py-name">_signal</tt><tt class="py-op">.</tt><tt class="py-name">filtfilt</tt> </tt>
+<a name="L60"></a><tt class="py-lineno">60</tt>  <tt class="py-line">    <tt class="py-keyword">else</tt><tt class="py-op">:</tt> </tt>
+<a name="L61"></a><tt class="py-lineno">61</tt>  <tt class="py-line">        <tt class="py-name">filt</tt> <tt class="py-op">=</tt> <tt class="py-name">_signal</tt><tt class="py-op">.</tt><tt class="py-name">lfilter</tt> </tt>
+<a name="L62"></a><tt class="py-lineno">62</tt>  <tt class="py-line">    <tt class="py-name">ord</tt><tt class="py-op">,</tt> <tt class="py-name">wn</tt> <tt class="py-op">=</tt> <tt class="py-name">_signal</tt><tt class="py-op">.</tt><tt class="py-name">buttord</tt><tt class="py-op">(</tt><tt class="py-name">wp</tt><tt class="py-op">=</tt><tt class="py-name">wp</tt><tt class="py-op">,</tt> <tt class="py-name">ws</tt><tt class="py-op">=</tt><tt class="py-name">ws</tt><tt class="py-op">,</tt> <tt class="py-name">gpass</tt><tt class="py-op">=</tt><tt class="py-name">gpass</tt><tt class="py-op">,</tt> <tt class="py-name">gstop</tt><tt class="py-op">=</tt><tt class="py-name">gstop</tt><tt class="py-op">)</tt> </tt>
+<a name="L63"></a><tt class="py-lineno">63</tt>  <tt class="py-line">    <tt class="py-name">b</tt><tt class="py-op">,</tt><tt class="py-name">a</tt> <tt class="py-op">=</tt> <tt class="py-name">_signal</tt><tt class="py-op">.</tt><tt class="py-name">butter</tt><tt class="py-op">(</tt><tt class="py-name">N</tt><tt class="py-op">=</tt><tt class="py-name">ord</tt><tt class="py-op">,</tt> <tt class="py-name">Wn</tt> <tt class="py-op">=</tt> <tt class="py-name">wn</tt><tt class="py-op">,</tt> <tt class="py-name">btype</tt><tt class="py-op">=</tt><tt class="py-name">ftype</tt><tt class="py-op">)</tt> </tt>
+<a name="L64"></a><tt class="py-lineno">64</tt>  <tt class="py-line">    <tt class="py-name">data</tt> <tt class="py-op">=</tt> <tt class="py-name">filt</tt><tt class="py-op">(</tt><tt class="py-name">b</tt><tt class="py-op">=</tt><tt class="py-name">b</tt><tt class="py-op">,</tt> <tt class="py-name">a</tt><tt class="py-op">=</tt><tt class="py-name">a</tt><tt class="py-op">,</tt> <tt class="py-name">x</tt><tt class="py-op">=</tt><tt class="py-name">data</tt><tt class="py-op">,</tt> <tt class="py-name">axis</tt><tt class="py-op">=</tt><tt class="py-name">axis</tt><tt class="py-op">)</tt> </tt>
+<a name="L65"></a><tt class="py-lineno">65</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt class="py-name">return_param</tt><tt class="py-op">:</tt> </tt>
+<a name="L66"></a><tt class="py-lineno">66</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">data</tt><tt class="py-op">,</tt> <tt class="py-name">ord</tt><tt class="py-op">,</tt> <tt class="py-op">(</tt><tt class="py-name">b</tt><tt class="py-op">,</tt> <tt class="py-name">a</tt><tt class="py-op">)</tt> </tt>
+<a name="L67"></a><tt class="py-lineno">67</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">data</tt> </tt>
+</div><a name="L68"></a><tt class="py-lineno">68</tt>  <tt class="py-line"> </tt>
+<a name="_convertfreq"></a><div id="_convertfreq-def"><a name="L69"></a><tt class="py-lineno">69</tt> <a class="py-toggle" href="#" id="_convertfreq-toggle" onclick="return toggle('_convertfreq');">-</a><tt class="py-line"><tt class="py-keyword">def</tt> <a class="py-def-name" href="meet.iir-module.html#_convertfreq">_convertfreq</a><tt class="py-op">(</tt><tt class="py-param">f</tt><tt class="py-op">,</tt> <tt class="py-param">s_rate</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="_convertfreq-collapsed" style="display:none;" pad="++" indent="++++"></div><div id="_convertfreq-expanded"><a name="L70"></a><tt class="py-lineno">70</tt>  <tt class="py-line">    <tt class="py-docstring">'''</tt> </tt>
+<a name="L71"></a><tt class="py-lineno">71</tt>  <tt class="py-line"><tt class="py-docstring">    Convert all frequencies to normalized frequency according to Nyquist frequency</tt> </tt>
+<a name="L72"></a><tt class="py-lineno">72</tt>  <tt class="py-line"><tt class="py-docstring">    '''</tt> </tt>
+<a name="L73"></a><tt class="py-lineno">73</tt>  <tt class="py-line">    <tt class="py-name">w</tt> <tt class="py-op">=</tt> <tt class="py-name">_np</tt><tt class="py-op">.</tt><tt class="py-name">array</tt><tt class="py-op">(</tt><tt class="py-name">f</tt><tt class="py-op">)</tt> <tt class="py-op">/</tt> <tt class="py-op">(</tt><tt class="py-name">s_rate</tt><tt class="py-op">/</tt><tt class="py-number">2.</tt><tt class="py-op">)</tt> </tt>
+<a name="L74"></a><tt class="py-lineno">74</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">w</tt> </tt>
+</div><a name="L75"></a><tt class="py-lineno">75</tt>  <tt class="py-line"> </tt>
+<a name="_preparefilter"></a><div id="_preparefilter-def"><a name="L76"></a><tt class="py-lineno">76</tt> <a class="py-toggle" href="#" id="_preparefilter-toggle" onclick="return toggle('_preparefilter');">-</a><tt class="py-line"><tt class="py-keyword">def</tt> <a class="py-def-name" href="meet.iir-module.html#_preparefilter">_preparefilter</a><tt class="py-op">(</tt><tt class="py-param">fp</tt><tt class="py-op">,</tt> <tt class="py-param">fs</tt><tt class="py-op">,</tt> <tt class="py-param">s_rate</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="_preparefilter-collapsed" style="display:none;" pad="++" indent="++++"></div><div id="_preparefilter-expanded"><a name="L77"></a><tt class="py-lineno">77</tt>  <tt class="py-line">    <tt class="py-docstring">'''</tt> </tt>
+<a name="L78"></a><tt class="py-lineno">78</tt>  <tt class="py-line"><tt class="py-docstring">    Convert frequencies and get type of filter</tt> </tt>
+<a name="L79"></a><tt class="py-lineno">79</tt>  <tt class="py-line"><tt class="py-docstring">    '''</tt> </tt>
+<a name="L80"></a><tt class="py-lineno">80</tt>  <tt class="py-line">    <tt class="py-name">fp</tt> <tt class="py-op">=</tt> <tt class="py-name">_np</tt><tt class="py-op">.</tt><tt class="py-name">atleast_1d</tt><tt class="py-op">(</tt><tt class="py-name">fp</tt><tt class="py-op">)</tt> </tt>
+<a name="L81"></a><tt class="py-lineno">81</tt>  <tt class="py-line">    <tt class="py-name">fs</tt> <tt class="py-op">=</tt> <tt class="py-name">_np</tt><tt class="py-op">.</tt><tt class="py-name">atleast_1d</tt><tt class="py-op">(</tt><tt class="py-name">fs</tt><tt class="py-op">)</tt> </tt>
+<a name="L82"></a><tt class="py-lineno">82</tt>  <tt class="py-line">    <tt class="py-comment">#get frequencies relative to Nyquist</tt> </tt>
+<a name="L83"></a><tt class="py-lineno">83</tt>  <tt class="py-line">    <tt class="py-name">wp</tt> <tt class="py-op">=</tt> <tt class="py-name">_np</tt><tt class="py-op">.</tt><tt class="py-name">sort</tt><tt class="py-op">(</tt><tt id="link-1" class="py-name" targets="Function meet.iir._convertfreq()=meet.iir-module.html#_convertfreq"><a title="meet.iir._convertfreq" class="py-name" href="#" onclick="return doclink('link-1', '_convertfreq', 'link-1');">_convertfreq</a></tt><tt class="py-op">(</tt><tt class="py-name">fp</tt><tt class="py-op">,</tt> <tt class="py-name">s_rate</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+<a name="L84"></a><tt class="py-lineno">84</tt>  <tt class="py-line">    <tt class="py-name">ws</tt> <tt class="py-op">=</tt> <tt class="py-name">_np</tt><tt class="py-op">.</tt><tt class="py-name">sort</tt><tt class="py-op">(</tt><tt id="link-2" class="py-name"><a title="meet.iir._convertfreq" class="py-name" href="#" onclick="return doclink('link-2', '_convertfreq', 'link-1');">_convertfreq</a></tt><tt class="py-op">(</tt><tt class="py-name">fs</tt><tt class="py-op">,</tt> <tt class="py-name">s_rate</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+<a name="L85"></a><tt class="py-lineno">85</tt>  <tt class="py-line">    <tt class="py-comment">#get type of filter</tt> </tt>
+<a name="L86"></a><tt class="py-lineno">86</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt class="py-name">len</tt><tt class="py-op">(</tt><tt class="py-name">wp</tt><tt class="py-op">)</tt> <tt class="py-op">==</tt> <tt class="py-number">1</tt><tt class="py-op">:</tt> </tt>
+<a name="L87"></a><tt class="py-lineno">87</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">ws</tt> <tt class="py-op">&lt;</tt> <tt class="py-name">wp</tt><tt class="py-op">:</tt> <tt class="py-name">ftype</tt> <tt class="py-op">=</tt> <tt class="py-string">'highpass'</tt> </tt>
+<a name="L88"></a><tt class="py-lineno">88</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">ws</tt> <tt class="py-op">&gt;</tt> <tt class="py-name">wp</tt><tt class="py-op">:</tt> <tt class="py-name">ftype</tt> <tt class="py-op">=</tt> <tt class="py-string">'lowpass'</tt> </tt>
+<a name="L89"></a><tt class="py-lineno">89</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt class="py-name">len</tt><tt class="py-op">(</tt><tt class="py-name">wp</tt><tt class="py-op">)</tt> <tt class="py-op">==</tt> <tt class="py-number">2</tt><tt class="py-op">:</tt> </tt>
+<a name="L90"></a><tt class="py-lineno">90</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">_np</tt><tt class="py-op">.</tt><tt class="py-name">all</tt><tt class="py-op">(</tt><tt class="py-op">[</tt><tt class="py-name">ws</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt> <tt class="py-op">&lt;</tt> <tt class="py-name">wp</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt><tt class="py-op">,</tt> <tt class="py-name">ws</tt><tt class="py-op">[</tt><tt class="py-number">1</tt><tt class="py-op">]</tt> <tt class="py-op">&gt;</tt> <tt class="py-name">wp</tt><tt class="py-op">[</tt><tt class="py-number">1</tt><tt class="py-op">]</tt><tt class="py-op">]</tt><tt class="py-op">,</tt><tt class="py-number">0</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> <tt class="py-name">ftype</tt> <tt class="py-op">=</tt> <tt class="py-string">'bandpass'</tt> </tt>
+<a name="L91"></a><tt class="py-lineno">91</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">_np</tt><tt class="py-op">.</tt><tt class="py-name">all</tt><tt class="py-op">(</tt><tt class="py-op">[</tt><tt class="py-name">ws</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt> <tt class="py-op">&gt;</tt> <tt class="py-name">wp</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt><tt class="py-op">,</tt> <tt class="py-name">ws</tt><tt class="py-op">[</tt><tt class="py-number">1</tt><tt class="py-op">]</tt> <tt class="py-op">&lt;</tt> <tt class="py-name">wp</tt><tt class="py-op">[</tt><tt class="py-number">1</tt><tt class="py-op">]</tt><tt class="py-op">]</tt><tt class="py-op">,</tt><tt class="py-number">0</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> <tt class="py-name">ftype</tt> <tt class="py-op">=</tt> <tt class="py-string">'bandstop'</tt> </tt>
+<a name="L92"></a><tt class="py-lineno">92</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">wp</tt><tt class="py-op">,</tt> <tt class="py-name">ws</tt><tt class="py-op">,</tt> <tt class="py-name">ftype</tt> </tt>
+</div><a name="L93"></a><tt class="py-lineno">93</tt>  <tt class="py-line"> </tt><script type="text/javascript">
+<!--
+expandto(location.href);
+// -->
+</script>
+</pre>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="meet-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Sat Mar 29 13:36:40 2014
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>
