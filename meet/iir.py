@@ -15,7 +15,8 @@ from __future__ import division
 from . import _np
 from . import _signal
 
-def butterworth(data, fp, fs, s_rate, gpass=3, gstop=8, axis=-1, zero_phase = True, return_param=False):
+def butterworth(data, fp, fs, s_rate, gpass=3, gstop=8, axis=-1,
+        zero_phase = True, return_param=False):
     '''
     Apply a butterworth filter to the data.
 
@@ -24,12 +25,14 @@ def butterworth(data, fp, fs, s_rate, gpass=3, gstop=8, axis=-1, zero_phase = Tr
 
     Example of Notations:
     ---------------------
-    For fs = 10, fp = 15 a high-pass filter is applied with the transition band between 10-15 Hz
-    For fs = 15, fp = 10 a low-pass filter is applied with the transition band between 10-15 Hz
-    For fs = [10, 40], fp = [20,30] a bandpass-filter with the passband 20-30 Hz and transitions
-                                    between 10-20 Hz and 30-40 Hz is applied
-    For fs = [20, 30], fp = [10,40] a bandstop-filter with the stopband 20-30 Hz and transitions
-                                    between 10-20 Hz and 30-40 Hz is applied
+    For fs = 10, fp = 15 a high-pass filter is applied with the
+       transition band between 10-15 Hz
+    For fs = 15, fp = 10 a low-pass filter is applied with the
+       transition band between 10-15 Hz
+    For fs = [10, 40], fp = [20,30] a bandpass-filter with the passband
+       20-30 Hz and transitions between 10-20 Hz and 30-40 Hz is applied
+    For fs = [20, 30], fp = [10,40] a bandstop-filter with the stopband
+       20-30 Hz and transitions between 10-20 Hz and 30-40 Hz is applied
 
     Input:
     ------
@@ -40,7 +43,8 @@ def butterworth(data, fp, fs, s_rate, gpass=3, gstop=8, axis=-1, zero_phase = Tr
     -- gpass - float - maximal attenuation in the passband (in dB)
     -- gstop - float - minimal attenuation in the passband (in dB)
     -- axis - int -along which axis the filter is applied
-    -- zero_phase - bool - if zero phase filter is applied by filtering in both directions
+    -- zero_phase - bool - if zero phase filter is applied by filtering
+                    in both directions
     -- return_param - bool - if the order, b, and a shoud be returned
 
     Output:
@@ -48,8 +52,10 @@ def butterworth(data, fp, fs, s_rate, gpass=3, gstop=8, axis=-1, zero_phase = Tr
     -- data - numpy array - the filtered data array
     if return_param:
        -- data
-       -- ord - int - filter order (this must be doubled for the zero_phase implementation)
-       -- (b, a) - Numerator (`b`) and denominator (`a`) polynomials of the IIR filter.
+       -- ord - int - filter order (this must be doubled for the
+                      zero_phase implementation)
+       -- (b, a) - Numerator (`b`) and denominator (`a`) polynomials of
+                   the IIR filter.
     '''
     # get filter parameters
     wp, ws, ftype = _preparefilter(fp, fs, s_rate)
@@ -68,7 +74,8 @@ def butterworth(data, fp, fs, s_rate, gpass=3, gstop=8, axis=-1, zero_phase = Tr
 
 def _convertfreq(f, s_rate):
     '''
-    Convert all frequencies to normalized frequency according to Nyquist frequency
+    Convert all frequencies to normalized frequency according to Nyquist
+    frequency
     '''
     w = _np.array(f) / (s_rate/2.)
     return w

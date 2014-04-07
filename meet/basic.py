@@ -14,7 +14,8 @@ from . import _np
 from . import _path
 from . import _packdir
 
-def readBinary(fname,num_channels,channels='all',readnum_dp='all',data_type='float4', buffermem=512):
+def readBinary(fname,num_channels,channels='all',readnum_dp='all',
+               data_type='float4', buffermem=512):
     '''
     Read EEG from a binary file and output as numpy array.
     The binary of a signal with k channels and n datapoints must be
@@ -33,21 +34,23 @@ def readBinary(fname,num_channels,channels='all',readnum_dp='all',data_type='flo
     ------
     -- fname - (str) - input file name
     -- num_channels - int - total number of channels in the file
-    -- channels - numpy array OR 'all' - iterable of channels to read (starting with 0) if 'all',
-                                         all channels are read
+    -- channels - numpy array OR 'all' - iterable of channels to read
+                  (starting with 0) if 'all', all channels are read
     -- readnum_dp - int OR 'all' - number of datapints to read
-    -- data_type - str - any of 'int2', 'int4', 'int8', 'float4', 'float8', 'float16' where the digit determins the
-                         number of bytes (= 8 bits) for each element
+    -- data_type - str - any of 'int2', 'int4', 'int8', 'float4',
+                         'float8', 'float16' where the digit determins
+                         the number of bytes (= 8 bits) for each element
     -- buffermem - float  - number of buffer to us in MegaBytes
 
     Output:
     -------
-    -- data - numpy array - data shaped k x n where k is number of channels
-                            and n is number of datapoints
+    -- data - numpy array - data shaped k x n where k is number of
+                            channels and n is number of datapoints
 
     Example:
     --------
-    >>> readBinary(_path.join(_path.join(_packdir, 'test_data'), 'sample.dat'), 2, data_type='int8')
+    >>> readBinary(_path.join(_path.join(_packdir, 'test_data'), \
+            'sample.dat'), 2, data_type='int8')
     array([[0, 2, 4, 6, 8],
            [1, 3, 5, 7, 9]])
     '''
@@ -81,22 +84,25 @@ def readBinary(fname,num_channels,channels='all',readnum_dp='all',data_type='flo
         readnum_dp = data_num
     fd = open(fname,'rb') #open file
     # get number of batches to read dataset
-    bytequot = int(int(buffermem * 1024**2 / bytenum) - (buffermem * 1024**2 / bytenum) % num_channels)
+    bytequot = int(int(buffermem * 1024**2 / bytenum) -
+               (buffermem * 1024**2 / bytenum) % num_channels)
     batchnum = int(_np.ceil(num_channels*readnum_dp / float(bytequot)))
     num_dp_per_batch = bytequot / num_channels
     readnum_ch = len(channels)
     data = _np.empty([readnum_ch,readnum_dp],dtype='<'+id+str(bytenum))
-    if ((num_channels*readnum_dp) % bytequot == 0) or (num_channels*readnum_dp) < bytequot:
+    if (((num_channels*readnum_dp) % bytequot == 0) or
+         (num_channels*readnum_dp) < bytequot):
         #if the dataset can be read in complete batches
         for i in xrange(batchnum):
             #read all channels
             data_temp=_np.fromfile(
               file = fd,
               count = bytequot,
-              dtype= '<'+id+str(bytenum)).reshape([num_channels,-1],order='f')
+              dtype= '<'+id+str(bytenum)).reshape([num_channels,-1],
+                      order='f')
             #assign the wanted chanels
-            data[:,i*num_dp_per_batch:i*num_dp_per_batch + num_dp_per_batch] \
-            = data_temp[channels,:]
+            data[:,i*num_dp_per_batch:i*num_dp_per_batch +
+                    num_dp_per_batch] = data_temp[channels,:]
         fd.close()
     else:
         #if partial batches are needed at the end
@@ -105,15 +111,17 @@ def readBinary(fname,num_channels,channels='all',readnum_dp='all',data_type='flo
             data_temp=_np.fromfile(
               file = fd,
               count = bytequot,
-              dtype= '<'+id+str(bytenum)).reshape([num_channels,-1],order='f')
+              dtype= '<'+id+str(bytenum)).reshape([num_channels,-1],
+                      order='f')
             #assign the wanted chanels
-            data[:,i*num_dp_per_batch:i*num_dp_per_batch + num_dp_per_batch] \
-            = data_temp[channels,:]
+            data[:,i*num_dp_per_batch:i*num_dp_per_batch +
+                    num_dp_per_batch] = data_temp[channels,:]
         #read all channels
         data_temp=_np.fromfile(
           file=fd,
           count = (num_channels*readnum_dp) % bytequot,
-          dtype= '<'+id+str(bytenum)).reshape([num_channels,-1],order='f')
+          dtype= '<'+id+str(bytenum)).reshape([num_channels,-1],
+                  order='f')
         #assign to wanted chanels
         data[:,(batchnum-1)*num_dp_per_batch:] = data_temp[channels,:]
         fd.close()
@@ -129,8 +137,10 @@ def interpolateEEG(data, markers, win, interpolate_type='mchs'):
               1st dimension: channels (can be ommited if single channel)
               2nd dimension: datapoints
     -- markers - marker positions arranged in 1d array
-    -- win - iterable of len 2 - determining the window in datapoints to be interpolated (win[0] is in, win[1] is out of the window)
-    -- interpolate_type: ['linear', 'mchs', 'akima'] - linear or Monotone Cubic Hermite Spline
+    -- win - iterable of len 2 - determining the window in datapoints to
+             be interpolated (win[0] is in, win[1] is out of the window)
+    -- interpolate_type: ['linear', 'mchs', 'akima'] - linear or
+                         Monotone Cubic Hermite Spline
        or Akima interpolation
 
     Output:
@@ -170,27 +180,32 @@ def interpolateEEG(data, markers, win, interpolate_type='mchs'):
             data[interpolpts] = interp(x, data[have_indices])
         elif data.ndim == 2:
             for ch in xrange(data.shape[0]):
-                data[ch, interpolpts] = interp(x, data[ch, have_indices])
+                data[ch, interpolpts] = interp(x,
+                        data[ch, have_indices])
     return data
 
 
 def epochEEG(data, marker, win):
     """
-    Arange the dataset into trials (=epochs) according to the marker and window.
+    Arange the dataset into trials (=epochs) according to the marker and
+    window.
 
     markers and the window borders are sorted in ascending order.
 
     Input:
     ------
-    -- data - numpy array - 1st dim channels (cam be ommited if single channel)
+    -- data - numpy array - 1st dim channels (can be ommited if single
+                                              channel)
                             2nd dim datapoints
     -- marker - iterable - the marker
-    -- win - iterable of len 2 - determing the start and end of epchos in dp (win[0] is in, win[1] is out of the window)
+    -- win - iterable of len 2 - determing the start and end of epchos
+             in dp (win[0] is in, win[1] is out of the window)
 
     Output:
     -------
     -- epochs - numpy array - dimension one more then data input
-                            - 1st dim: channel (might be ommited - see above)
+                            - 1st dim: channel (might be ommited - see
+                                                above)
                             - 2nd dim: epoch length = win[1] - win[0]
                             - 3rd dim: number of epochs
 
@@ -214,11 +229,14 @@ def epochEEG(data, marker, win):
     #omit marker that would allow only for incomplete windows
     if (marker[0] + win[0]) < 0:
         marker = marker[marker+win[0] > 0]
-        'Warning: Marker had to be ommited since for some marker + win[0] < 0'
+        print ('Warning: Marker had to be ommited since for some' +
+               'marker + win[0] < 0')
     if (marker[-1] + win[1]) >= n:
         marker = marker[marker+win[1] < n]
-        'Warning: Marker had to be ommited since for some marker + win[1] >= len(data)'
-    indices = _np.array([_np.arange(m + win[0], m+win[1], 1) for m in marker])
+        print ('Warning: Marker had to be ommited since for some' +
+               'marker + win[1] >= len(data)')
+    indices = _np.array([_np.arange(m + win[0], m+win[1], 1)
+                         for m in marker])
     return data.T[indices].T
 
 def calculateRMS(data, axis=-1):
@@ -228,7 +246,8 @@ def calculateRMS(data, axis=-1):
     Input:
     ------
     -- data - numpy array - input data
-    -- axis - int - axis along which the rms is calculated; if None, the flattened array is used
+    -- axis - int - axis along which the rms is calculated; if None, the
+                    flattened array is used
     Output:
     -------
     -- rms value along the indicated axis
@@ -248,7 +267,8 @@ def calculateRMS(data, axis=-1):
     if axis == None:
         return _np.sqrt((_np.ravel(data)**2).mean())
     else:
-        data = data.swapaxes(0,axis) # now calculate everything along axis 0
+        data = data.swapaxes(0,axis) # now calculate everything along
+                                     # axis 0
         return _np.sqrt((data**2).mean(0))
 
 def getMarker(marker, width=50, mindist=100):
@@ -257,9 +277,12 @@ def getMarker(marker, width=50, mindist=100):
     GetMarkerPosFromData(marker)
 
     input:
-    -- marker - one-dimensional array with trigger channel - each impulse or zero crossing is treated a marker
-    --width - int - caculates the local mean in window of size width - defaults to 50
-    --mindist - int - minimal distance between triggers in dp - defaults to 100
+    -- marker - one-dimensional array with trigger channel - each
+                impulse or zero crossing is treated a marker
+    --width - int - calculates the local mean in window of size width
+                    - defaults to 50
+    --mindist - int - minimal distance between triggers in dp
+                      - defaults to 100
     output:
     -- marker - one-dimensional array containing trigger positions
 
@@ -273,13 +296,21 @@ def getMarker(marker, width=50, mindist=100):
     """ 
 
     # normalize by local median and mad
-    marker = marker + _np.random.random(len(marker)) * marker.ptp() * 1E-5 # add some random noise to prevent the median from being zero later
-    mean = _np.convolve(marker, _np.ones(width)/float(width), mode='same') # moving average
-    mad = _np.median(_np.abs(marker - mean)) # mean of locamean of localmalize by moving average and by mad over all points - find crossing from negative to > 20
-    marker = _np.abs(marker - mean) / mad - 20 # weight the local deviation to average deviation and find crossings above the 20-fold mad
-    results = _np.where(_np.all([marker[:-1] * marker[1:] < 0, marker[:-1] < 0], axis=0))[0] # find zero crossings
+    # add some random noise to prevent the median from being zero later
+    marker = (marker +
+            _np.random.random(len(marker)) * marker.ptp() * 1E-5)
+    mean = _np.convolve(marker, _np.ones(width)/float(width),
+                        mode='same') # moving average
+    # median of deviation from local mean
+    mad = _np.median(_np.abs(marker - mean))
+    # weight the local deviation to average deviation and find crossings
+    # above the 20-fold mad
+    marker = _np.abs(marker - mean) / mad - 20 
+    results = _np.where(_np.all([marker[:-1] * marker[1:] < 0,
+              marker[:-1] < 0], axis=0))[0] # find zero crossings
     too_close = True
     while too_close:
-        results = (results[::-1][_np.diff(results)[::-1] > mindist])[::-1]
+        results = (results[::-1][_np.diff(results)[::-1] >
+                   mindist])[::-1]
         if _np.all(_np.diff(results) > mindist): too_close = False
     return results + int(width/2.)

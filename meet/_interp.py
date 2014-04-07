@@ -18,8 +18,11 @@ def _get_akima_slopes(x,y, x_index):
     m3 = (y[x_index+1] - y[x_index+0]) / (x[x_index+1] - x[x_index+0])
     m4 = (y[x_index+2] - y[x_index+1]) / (x[x_index+2] - x[x_index+1])
     slopes = _np.zeros_like(m1)
-    i = _np.any([_np.all([m1==m2, m3==m4, m2!=m3],0), m2==m3],0) # indices for invalid output 
-    slopes[~i] = (_np.abs(m4[~i] - m3[~i])*m2[~i] + _np.abs(m2[~i]-m1[~i])*m3[~i]) / (_np.abs(m4[~i]-m3[~i]) + _np.abs(m2[~i]-m1[~i]))
+    # indices for invalid output 
+    i = _np.any([_np.all([m1==m2, m3==m4, m2!=m3],0), m2==m3],0)
+    slopes[~i] = ((_np.abs(m4[~i] - m3[~i])*m2[~i] +
+            _np.abs(m2[~i]-m1[~i])*m3[~i]) /
+            (_np.abs(m4[~i]-m3[~i]) + _np.abs(m2[~i]-m1[~i])))
     return slopes
 
 def _get_mchi_slopes(x,y,x_index):
@@ -55,7 +58,8 @@ def akima(x,y):
     p1 = t1
     p2 = (3*(y2 - y1)/(x2 - x1) - 2*t1 - t2) / (x2 - x1)
     p3 = (t1 + t2 -2*(y2 - y1)/(x2-x1)) / (x2-x1)**2
-    yi = [p0[k] + p1[k]*(xi[k]-x1[k]) + p2[k]*(xi[k]-x1[k])**2 + p3[k]*(xi[k]-x1[k])**3 for k in xrange(len(x1_index))]
+    yi = [p0[k] + p1[k]*(xi[k]-x1[k]) + p2[k]*(xi[k]-x1[k])**2 + p3[k]*
+            (xi[k]-x1[k])**3 for k in xrange(len(x1_index))]
     return _np.hstack(yi)
 
 def mchi(x,y):
@@ -79,5 +83,6 @@ def mchi(x,y):
     p1 = t1
     p2 = (3*(y2 - y1)/(x2 - x1) - 2*t1 - t2) / (x2 - x1)
     p3 = (t1 + t2 -2*(y2 - y1)/(x2-x1)) / (x2-x1)**2
-    yi = [p0[k] + p1[k]*(xi[k]-x1[k]) + p2[k]*(xi[k]-x1[k])**2 + p3[k]*(xi[k]-x1[k])**3 for k in xrange(len(x1_index))]
+    yi = [p0[k] + p1[k]*(xi[k]-x1[k]) + p2[k]*(xi[k]-x1[k])**2 + p3[k]*
+            (xi[k]-x1[k])**3 for k in xrange(len(x1_index))]
     return _np.hstack(yi)
