@@ -33,7 +33,7 @@ If you use this software for scientific publications please give proper
 citation.
 In the moment please cite as (or similar)
 G. Waterstraat, 2014. Modular EEg toolkit (MEET) for Python.
-http://<code.com>. Retrieved on <date>
+https://github.com/neurophysics/meet. Retrieved on <date>
 
 There is a properly citable publication on the way as well which may be
 cited additionally.
