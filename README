@@ -19,6 +19,20 @@ Dependencies:
 -Python 2
 -Numpy
 -Scipy
+-Matplotlib
+
+Installation:
+-------------
+Using the usual procedure:
+
+python setup.py build
+python setup.py install (be sure that the python executable is Python 2)
+
+Uninstallation:
+---------------
+if you use pip you can uninstall doing:
+
+pip uninstall meet
 
 Version Compatibility:
 ----------------------
