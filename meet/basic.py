@@ -304,10 +304,11 @@ def getMarker(marker, width=50, mindist=100):
     # median of deviation from local mean
     mad = _np.median(_np.abs(marker - mean))
     # weight the local deviation to average deviation and find crossings
-    # above the 20-fold mad
-    marker = _np.abs(marker - mean) / mad - 20 
-    results = _np.where(_np.all([marker[:-1] * marker[1:] < 0,
-              marker[:-1] < 0], axis=0))[0] # find zero crossings
+    # above the 50-fold mad
+    marker = _np.abs(marker - mean) / mad - 50
+    results = _np.array([-mindist] + list(_np.where(_np.all([marker[:-1] * marker[1:] < 0,
+              marker[:-1] < 0], axis=0))[0])) # find zero crossings
+
     too_close = True
     while too_close:
         results = (results[::-1][_np.diff(results)[::-1] >
