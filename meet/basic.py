@@ -292,7 +292,7 @@ def getMarker(marker, width=50, mindist=100):
     >>> x[200:400] = -1
     >>> x[600:800] = -1
     >>> getMarker(x)
-    array([ 400,  600,  800, 1000])
+    array([200, 400,  600,  800])
     """ 
 
     # normalize by local median and mad
@@ -313,4 +313,5 @@ def getMarker(marker, width=50, mindist=100):
         results = (results[::-1][_np.diff(results)[::-1] >
                    mindist])[::-1]
         if _np.all(_np.diff(results) > mindist): too_close = False
-    return results + int(width/2.)
+    results = results + int(width/2.)
+    return results[_np.all([results > 0, results < len(marker)],0)]
