@@ -225,6 +225,8 @@ def epochEEG(data, marker, win):
     """
     win = _np.sort(win)
     marker = _np.sort(marker)
+    data_ndim = data.ndim
+    data = _np.atleast_2d(data)
     p,n = data.shape
     #omit marker that would allow only for incomplete windows
     if (marker[0] + win[0]) < 0:
@@ -237,7 +239,11 @@ def epochEEG(data, marker, win):
                'marker + win[1] >= len(data)')
     indices = _np.array([_np.arange(m + win[0], m+win[1], 1)
                          for m in marker])
-    return data.T[indices].T
+    result = data.T[indices].T
+    if data_ndim == 1:
+        return result[0]
+    else:
+        return result
 
 def calculateRMS(data, axis=-1):
     """
