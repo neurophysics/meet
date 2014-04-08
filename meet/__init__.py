@@ -89,7 +89,15 @@ import scipy.interpolate as _sci
 
 _packdir = _path.dirname(_path.abspath(__file__))
 
-__all__ = ['basic']
+__all__ = ['basic', 'eeg_viewer', 'elm', 'iir', 'spatfilt', 'sphere', 'tf']
 
-#import all basic functions
+#import all basic functions into base namespace
 from basic import *
+
+#import submodules automatically
+import eeg_viewer
+import elm
+import iir
+import spatfilt
+import sphere
+import tf

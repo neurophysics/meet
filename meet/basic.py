@@ -77,7 +77,7 @@ def readBinary(fname,num_channels,channels='all',readnum_dp='all',
     # get the length of the dataset
     filesize = getsize(fname)
     #get number of datapoints
-    data_num = filesize / bytenum / num_channels
+    data_num = filesize // bytenum // num_channels
     if channels =='all':
         channels = _np.arange(num_channels)
     if readnum_dp =='all':
