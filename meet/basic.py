@@ -171,7 +171,7 @@ def interpolateEEG(data, markers, win, interpolate_type='mchs'):
         from scipy.interpolate import interp1d as interp
         f = interp(x, data[:,have_indices], axis=-1)
         data[:,interpolpts] = f(interpolpts)
-    elif interpolate_type in ['pchip', 'akima']:
+    elif interpolate_type in ['mchs', 'akima']:
         if interpolate_type == 'akima':
             from _interp import akima as interp
         elif interpolate_type == 'mchs':

@@ -63,7 +63,6 @@ def akima(x,y):
     return _np.hstack(yi)
 
 def mchi(x,y):
-    import scipy.interpolate
     '''Monotone cubic hermite interpolation'''
     x -= x.min()
     #the interpolated points are where x is discontinuous
