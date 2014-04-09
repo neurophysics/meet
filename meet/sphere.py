@@ -148,8 +148,12 @@ def getChannelNames(fname):
 
 def projectCoordsOnSphere(coords):
     """
-    Get the Coords with same azimuth and altitude on on a spherical
-    surface with center 0 and radius 1
+    The input coordinates are projected onto a sphere with center
+    (0,0,0) and radius 1. 
+    For the input coordinates it is believed that they lie on a
+    sphere with center (0,0,0) and radius r = x**2 + y**2 + Z**2.
+    Subsequently this radius is scaled th 1, preserving altitude
+    and azimuth of the original coordinates.
 
     Input:
     ------
@@ -202,10 +206,13 @@ def meshCircle(d_samples=100):
     Y = _np.ma.masked_where(X**2 + Y**2 > 1, Y)
     return _np.ma.column_stack([_np.ma.ravel(X), _np.ma.ravel(Y)])
 
-def meshCircleOnSphere(coords):
+def projectCircleOnSphere(coords):
     """
-    Calculate a 3D meshgrid on a sphere from a 2D meshgrid on a circle
-    with center (0,0) and radius 1
+    Project 2d coordinates inside a unit circle on a sphere with
+    center (0,0) and radius 1 using a stereographic projection
+    where the given circle is believed to be the on the plane
+    crossing the equator (z=0) and the perspective point is the
+    southpole (0,0,-1)
 
     Input:
     ------
@@ -221,17 +228,19 @@ def meshCircleOnSphere(coords):
                      - 3rd column: z
      (all coordinates outside a unit sphere are masked)
     """
-    theta = _np.ma.sqrt((coords**2).sum(1))
-    k = _np.ones_like(theta)
-    k[theta != 0] = _np.sin(theta[theta != 0]) / theta[theta != 0]
-    x  = (k*coords[:,0])
-    y = (k*coords[:,1])
-    z  = _np.ma.sqrt(1 - x**2 - y**2)
-    return _np.ma.column_stack([x,y,z])
+    xy = 2 * coords / (1 + _np.sum(coords**2, 1))[:,_np.newaxis]
+    z = (1 + _np.sum(-1 * coords**2, 1)) / (1 + _np.sum(coords**2, 1))
+    return _np.ma.column_stack([xy,z])
 
-def meshSphereOnCircle(sphere_coords):
+
+def projectSphereOnCircle(sphere_coords):
     """
-    Calculate a 2D meshgrid on a circle from a 3D meshgrid on a sphere
+    Project coordinates that lie on the surface of a unit sphere
+    with center (0,0,0) and radius 1 into a unit circle
+    The vertex of the sphere is (0,0,1). The projection is done from
+    the "southpole" (0,0,-1) onto the plane with z=0.
+    The northern hemisphere is hereby projected into the unit circle,
+    the souther hemisphere outside the unit circle.
 
     Input:
     ------
@@ -244,21 +253,8 @@ def meshSphereOnCircle(sphere_coords):
     -- coords - 2D array containing the coordinates in rows
                      - 1st column: x
                      - 2nd column: y
-
-    Example:
-    --------
-    >>> coords_2d = meshCircle(4) # mesh a circle with 4 points on the \
-            diagonal
-    >>> coords_3d = meshCircleOnSphere(coords_2d) # project that mesh \
-            on a sphere
-    >>> _np.all(_np.abs((meshSphereOnCircle(coords_3d) - coords_2d) / \
-            coords_2d) < 1E-10)
-    True
     """
-    theta = _np.arcsin(_np.sqrt(1 - sphere_coords[:,2]**2))
-    k = _np.ones_like(theta)
-    k[theta != 0] = _np.sin(theta[theta != 0]) / theta[theta != 0]
-    return sphere_coords[:,:2] / k[:,_np.newaxis]
+    return sphere_coords[:,:2] / (1+sphere_coords[:,2])[:,_np.newaxis]
 
 def _getGH(coords1, coords2, m=4, n=7, which='G'):
     '''
@@ -411,7 +407,7 @@ def csdMap(RealCoords, data, diameter_samples=200, n=(7,20), m=4,
                  circle is masked. the unit of z is data_unit / m**2
     """
     InterpCoords_2d = meshCircle(d_samples=diameter_samples)
-    InterpCoords_3d = meshCircleOnSphere(InterpCoords_2d)
+    InterpCoords_3d = projectCircleOnSphere(InterpCoords_2d)
     # be sure that these coords are on the surface of a unit sphere
     RealCoords = projectCoordsOnSphere(RealCoords)
     G_hh = _getGH(RealCoords, RealCoords, m=m, n=n[0], which='G')
