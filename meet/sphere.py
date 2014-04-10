@@ -48,13 +48,16 @@ from . import _np
 from . import _path
 from . import _packdir
 from numpy.polynomial.legendre import legval as _legval
+from scipy.spatial import ConvexHull as _hull
+from matplotlib import path as _mpath
 
 def getStandardCoordinates(elecnames,fname='standard'):
     """
     Read (cartesian) Electrode Coordinates from tab-seperated text file
 
     The standard is plotting_1005.txt obtained from:
-    http://robertoostenveld.nl/electrode/plotting_1005.txt
+    http://robertoostenveld.nl/electrode/plotting_1005.txt (however 1st
+    and 2nd column were exchanged to get x,y,z order)
 
     Thanks to Robert Oostenveld for sharing these files!!!
 
@@ -65,6 +68,7 @@ def getStandardCoordinates(elecnames,fname='standard'):
                    - this is a tab delimeed file with the UPPERCASE
                      electrode names in first column
                      x,y,z in subsequent columns
+                     T7, T8, Oz, Fpz and Cz must be included!
     Output:
     -------
     -- coords - 2D array containing the cartesian coordinates in rows
@@ -95,23 +99,24 @@ def getStandardCoordinates(elecnames,fname='standard'):
     # move the electrodes accordingly
     for key in coords.iterkeys():
         coords[key] = _np.array(coords[key],dtype=float)
-        coords[key][1] -= x0
+        coords[key][0] -= x0
         coords[key][1] -= y0
         coords[key][2] -= z0
-    #electrode with (1,0,0)
+    #transform to put all electrodes to their standard place
+    #electrode that should be at (1,0,0)
     XA = _np.array(coords['T8']).astype(float) 
-    #electrode with (0,1,0)
-    YA = -1 * _np.array(coords['OZ']).astype(float)
-    #electrode with (0,0,1)
+    #electrode that should be at (0,1,0)
+    YA = _np.array(coords['FPZ']).astype(float)
+    #electrode that should be at (0,0,1)
     ZA = _np.array(coords['CZ']).astype(float)
-    TransMat = _np.matrix(_np.array([XA, YA, ZA], dtype=float).T)
+    TransMat = _np.array([XA, YA, ZA], dtype=float)
     coords_result = []
     for item in elecnames:
         if item in coords:
-            temp = list(_np.array(TransMat.I * _np.matrix(
-                _np.array(coords[item], dtype=float)).T).flatten())
-            coords_result.append(temp)
-        else: coords_result.append(
+            coords_result.append(
+            _np.dot(TransMat, coords[item]))
+        else:
+            coords_result.append(
                 _np.array([_np.nan,_np.nan,_np.nan])) # if not in file
     coords = _np.array(coords_result,dtype=float)
     return coords
@@ -178,47 +183,59 @@ def projectCoordsOnSphere(coords):
     out_coords = t[:,_np.newaxis]*coords
     return out_coords
 
-def meshCircle(d_samples=100):
-    """
-    Calculate a meshgrid containing the points of a circle
-    (center (0,0) and radius 1)
-    
-    Input:
-    ------
-    -- d_samples - number of points along the diameter
+#def meshCircle(d_samples=100):
+#    """
+#    Calculate a meshgrid containing the points of a circle
+#    (center (0,0) and radius 1)
+#    
+#    Input:
+#    ------
+#    -- d_samples - number of points along the diameter
+#
+#    Output:
+#    -------
+#    -- coords - masked 2D array containing the coordinates in rows
+#              - 1st column: x
+#              - 2nd column: y
+#       (everything otside a unit sphere is masked)
+#    """
+#    coords = []
+#    x = y = _np.linspace(-1, 1, d_samples, endpoint=True)
+#    X, Y = _np.meshgrid(x,y)
+#    #X = X.ravel()
+#    #Y = Y.ravel()
+#    #remove points outside the circle
+#    #inlier  = X**2 + Y**2 <= 1
+#    #return _np.array([X[inlier], Y[inlier]]).T
+#    X = _np.ma.masked_where(X**2 + Y**2 > 1, X)
+#    Y = _np.ma.masked_where(X**2 + Y**2 > 1, Y)
+#    return _np.ma.column_stack([_np.ma.ravel(X), _np.ma.ravel(Y)])
 
-    Output:
-    -------
-    -- coords - masked 2D array containing the coordinates in rows
-              - 1st column: x
-              - 2nd column: y
-       (everything otside a unit sphere is masked)
-    """
-    coords = []
-    x = y = _np.linspace(-1, 1, d_samples, endpoint=True)
-    X, Y = _np.meshgrid(x,y)
-    #X = X.ravel()
-    #Y = Y.ravel()
-    #remove points outside the circle
-    #inlier  = X**2 + Y**2 <= 1
-    #return _np.array([X[inlier], Y[inlier]]).T
-    X = _np.ma.masked_where(X**2 + Y**2 > 1, X)
-    Y = _np.ma.masked_where(X**2 + Y**2 > 1, Y)
-    return _np.ma.column_stack([_np.ma.ravel(X), _np.ma.ravel(Y)])
-
-def projectCircleOnSphere(coords):
+def projectCircleOnSphere(coords, projection = 'stereographic'):
     """
     Project 2d coordinates inside a unit circle on a sphere with
-    center (0,0) and radius 1 using a stereographic projection
-    where the given circle is believed to be the on the plane
+    center (0,0) and radius 1.
+    
+    Stereographic projection:
+    Where the given circle is believed to be the on the plane
     crossing the equator (z=0) and the perspective point is the
-    southpole (0,0,-1)
+    southpole (0,0,-1). Points inside the circle are projected
+    onto the northern hemisphere, points outside the circle on
+    the souther hemisphere.
+
+    Orthographic projection:
+    All points have to lie inside the circle and are projected
+    on the northern hemisphere by keeping the xy coordinates and
+    adding a z coordinate to result in a radius of 1.
+    Poinst outside the circle result in nans.
 
     Input:
     ------
     -- coords - 2D array containing the coordinates in rows
               - 1st column: x
               - 2nd column: y
+    -- projection - str - 'stereographic' (standard) or 'orthographic'
+                          (explanations see above)
     Output:
     ------
     -- sphere_coords - masked 3D array containing the coordinates in
@@ -228,19 +245,32 @@ def projectCircleOnSphere(coords):
                      - 3rd column: z
      (all coordinates outside a unit sphere are masked)
     """
-    xy = 2 * coords / (1 + _np.sum(coords**2, 1))[:,_np.newaxis]
-    z = (1 + _np.sum(-1 * coords**2, 1)) / (1 + _np.sum(coords**2, 1))
-    return _np.ma.column_stack([xy,z])
+    if projection == 'stereographic':
+        xy = 2 * coords / (1 + _np.sum(coords**2, 1))[:,_np.newaxis]
+        z = (1 + _np.sum(-1 * coords**2, 1)) / (1 + _np.sum(coords**2, 1))
+        return _np.ma.column_stack([xy,z])
+    elif projection == 'orthographic':
+        z = _np.sqrt(1 - _np.sum(coords**2,1))
+        return _np.ma.column_stack([coords,z])
+    else:
+        raise ValueError('projection must be \"stereographic\" or' +
+                '\"orthographic\"')
 
-
-def projectSphereOnCircle(sphere_coords):
+def projectSphereOnCircle(sphere_coords, projection="stereographic"):
     """
     Project coordinates that lie on the surface of a unit sphere
     with center (0,0,0) and radius 1 into a unit circle
+
+    If projection == 'stereographic':
     The vertex of the sphere is (0,0,1). The projection is done from
     the "southpole" (0,0,-1) onto the plane with z=0.
     The northern hemisphere is hereby projected into the unit circle,
     the souther hemisphere outside the unit circle.
+
+    If projection == 'orthographic':
+    Only the northern hemisphere is mapped onto a plane through the
+    equator by keeping the xy-coordinates. For coordinates on the 
+    southern hemisphere nan is returned.
 
     Input:
     ------
@@ -248,13 +278,23 @@ def projectSphereOnCircle(sphere_coords):
               - 1st column: x
               - 2nd column: y
               - 3rd column: z
+    -- projection - str - 'stereographic' (standard) or 'orthographic'
+                          (explanations see above)
     Output:
     -------
     -- coords - 2D array containing the coordinates in rows
                      - 1st column: x
                      - 2nd column: y
     """
-    return sphere_coords[:,:2] / (1+sphere_coords[:,2])[:,_np.newaxis]
+    if projection == 'stereographic':
+        return sphere_coords[:,:2] / (1+sphere_coords[:,2])[:,_np.newaxis]
+    elif projection == 'orthographic':
+        return _np.where((sphere_coords[:,2] < 0)[:,_np.newaxis] *
+                _np.ones(sphere_coords.shape, bool),
+                _np.nan, sphere_coords)[:,:2]
+    else:
+        raise ValueError('projection must be \"stereographic\" or' +
+                '\"orthographic\"')
 
 def _getGH(coords1, coords2, m=4, n=7, which='G'):
     '''
@@ -285,14 +325,15 @@ def _getGH(coords1, coords2, m=4, n=7, which='G'):
         c_g = ( 2*N + 1) / (N**2 + N)**m #coefficients for g
         #start with 1st (not 0st) polynomial
         c_g = _np.hstack([[0], c_g])
-        return _legval(cos_angle, c_g) / (4 * _np.pi) # this is G in the Perrin publication
+        result = _legval(cos_angle, c_g) / (4 * _np.pi) # this is G in the Perrin publication
     elif which == 'H':
         c_h = (-2*N - 1) / (N**2 + N)**(m-1) #coefficients for h
         #start with 1st (not 0st) polynomial
         c_h = _np.hstack([[0], c_h])
-        return -1 * _legval(cos_angle, c_h) / (4 * _np.pi) # this is H in the Perrin publication
+        result = -1 * _legval(cos_angle, c_h) / (4 * _np.pi)
     else:
         raise ValueError('which must be G or H')
+    return result
 
 def _sphereSpline(data, G_hh, G_hw=None, H_hw=None, smooth=0,
         type='Interpolation', buffersize=64):
@@ -341,11 +382,34 @@ def _sphereSpline(data, G_hh, G_hw=None, H_hw=None, smooth=0,
     else:
         return result
 
+def _insideHull(points, vertices):
+    """
+    Find out if which points are inside a convex hull as defined by its
+    vertices
+    """
+    codes = _np.ones(len(vertices)+1, _np.uint8) + 1
+    vertices = _np.vstack([vertices, [0,0]])
+    codes[0] = 1
+    codes[-1] = 79
+    path = _mpath.Path(vertices=vertices, codes=codes)
+    return path.contains_points(points)
+
 def potMap(RealCoords, data, diameter_samples=200, n=(7,7), m=4,
-        smooth=0):
+        smooth=0, projection='stereographic'):
     """
     Get a scalp map of potentials interpolated on a sphere.
 
+    If projection == 'stereographic':
+    The vertex of the sphere is (0,0,1). The projection is done from
+    the "southpole" (0,0,-1) onto the plane with z=0.
+    The northern hemisphere is hereby projected into the unit circle,
+    the souther hemisphere outside the unit circle.
+
+    If projection == 'orthographic':
+    Only the northern hemisphere is mapped onto a plane through the
+    equator by keeping the xy-coordinates. For coordinates on the 
+    southern hemisphere nan is returned.
+    
     Input:
     ------
     -- RealCoords - array of shape channels x 3 - (x,y,z) cartesian
@@ -360,6 +424,8 @@ def potMap(RealCoords, data, diameter_samples=200, n=(7,7), m=4,
     -- m - int - order of the spherical spline interpolation, defaults
            to 4
     -- smooth - float - amount of smoothing, defaults to 0
+    -- projection - str - 'stereographic' (standard) or 'orthographic'
+                          (explanations see above)
     
     Output:
     -------
@@ -367,24 +433,47 @@ def potMap(RealCoords, data, diameter_samples=200, n=(7,7), m=4,
                  interpolated values where everything outside the unit
                  circle is masked.
     """
-    InterpCoords_2d = meshCircle(d_samples=diameter_samples)
-    InterpCoords_3d = meshCircleOnSphere(InterpCoords_2d)
-    RealCoords = projectCoordsOnSphere(RealCoords) # be sure that these coords are on the surface of a unit sphere
+    RealCoords = projectCoordsOnSphere(RealCoords)
+    RealCoords_2D = projectSphereOnCircle(RealCoords, projection=projection)
+    # get the convex hull of 2d points
+    hull = _hull(RealCoords_2D[_np.all(_np.isfinite(RealCoords_2D),1)])
+    # the final grid will be quadratic, so the extent of the grid is equal for x and y
+    grid_extent = _np.abs(RealCoords_2D[_np.all(_np.isfinite(RealCoords_2D),1)][hull.vertices]).max(None)
+    grid_size = diameter_samples * grid_extent # along the equator diameter_samples should be plotted,
+                                               # if the grid extent is smaller or larger scale adequately
+    x = _np.linspace(-grid_extent, grid_extent, grid_size, endpoint=True)
+    X, Y = _np.meshgrid(x,x)
+    InterpCoords_2D = _np.column_stack([X.ravel(), Y.ravel()])
+    #mask all points outside the hull of existing Coordinates
+    mask = _insideHull(InterpCoords_2D, RealCoords_2D[_np.all(_np.isfinite(RealCoords_2D),1)][hull.vertices])
+    InterpCoords_2D = _np.ma.masked_where(
+            ~_np.column_stack([mask,mask]),
+            InterpCoords_2D)
+    InterpCoords_3D = projectCircleOnSphere(InterpCoords_2D)
     G_hh = _getGH(RealCoords, RealCoords, m=m, n=n[0], which='G')
-    G_hw = _getGH(RealCoords, InterpCoords_3d, m=m, n=n[1], which='G')
+    G_hw = _getGH(RealCoords, InterpCoords_3D, m=m, n=n[1], which='G')
     pot = _sphereSpline(data, G_hh=G_hh, G_hw=G_hw, smooth=smooth,
             type='Interpolation')
-    return (InterpCoords_2d[:,0].reshape(diameter_samples,
-                diameter_samples),
-            InterpCoords_2d[:,1].reshape(diameter_samples,
-                diameter_samples),
-            pot.reshape(diameter_samples, diameter_samples))
+    return (InterpCoords_2D[:,0].reshape(grid_size, grid_size),
+            InterpCoords_2D[:,1].reshape(grid_size, grid_size),
+            pot.reshape(grid_size, grid_size))
 
 def csdMap(RealCoords, data, diameter_samples=200, n=(7,20), m=4,
-        smooth=1E-5):
+        smooth=1E-5, projection='stereographic'):
     """
     Get a scalp map of CSDs calculated from spherical splines.
 
+    If projection == 'stereographic':
+    The vertex of the sphere is (0,0,1). The projection is done from
+    the "southpole" (0,0,-1) onto the plane with z=0.
+    The northern hemisphere is hereby projected into the unit circle,
+    the souther hemisphere outside the unit circle.
+
+    If projection == 'orthographic':
+    Only the northern hemisphere is mapped onto a plane through the
+    equator by keeping the xy-coordinates. For coordinates on the 
+    southern hemisphere nan is returned.
+    
     Input:
     ------
     -- RealCoords - array of shape channels x 3 - (x,y,z) cartesian
@@ -399,6 +488,8 @@ def csdMap(RealCoords, data, diameter_samples=200, n=(7,20), m=4,
     -- m - int - order of the spherical spline interpolation,
            defaults to 4
     -- smooth - float - amount of smoothing, defaults to 1E-5
+    -- projection - str - 'stereographic' (standard) or 'orthographic'
+                          (explanations see above)
     
     Output:
     -------
@@ -406,19 +497,30 @@ def csdMap(RealCoords, data, diameter_samples=200, n=(7,20), m=4,
                  interpolated values where everything outside the unit
                  circle is masked. the unit of z is data_unit / m**2
     """
-    InterpCoords_2d = meshCircle(d_samples=diameter_samples)
-    InterpCoords_3d = projectCircleOnSphere(InterpCoords_2d)
-    # be sure that these coords are on the surface of a unit sphere
     RealCoords = projectCoordsOnSphere(RealCoords)
+    RealCoords_2D = projectSphereOnCircle(RealCoords, projection=projection)
+    # get the convex hull of 2d points
+    hull = _hull(RealCoords_2D[_np.all(_np.isfinite(RealCoords_2D),1)])
+    # the final grid will be quadratic, so the extent of the grid is equal for x and y
+    grid_extent = _np.abs(RealCoords_2D[_np.all(_np.isfinite(RealCoords_2D),1)][hull.vertices]).max(None)
+    grid_size = diameter_samples * grid_extent # along the equator diameter_samples should be plotted,
+                                               # if the grid extent is smaller or larger scale adequately
+    x = _np.linspace(-grid_extent, grid_extent, grid_size, endpoint=True)
+    X, Y = _np.meshgrid(x,x)
+    InterpCoords_2D = _np.column_stack([X.ravel(), Y.ravel()])
+    #mask all points outside the hull of existing Coordinates
+    mask = _insideHull(InterpCoords_2D, RealCoords_2D[_np.all(_np.isfinite(RealCoords_2D),1)][hull.vertices])
+    InterpCoords_2D = _np.ma.masked_where(
+            ~_np.column_stack([mask,mask]),
+            InterpCoords_2D)
+    InterpCoords_3D = projectCircleOnSphere(InterpCoords_2D)
     G_hh = _getGH(RealCoords, RealCoords, m=m, n=n[0], which='G')
-    H_hw = _getGH(RealCoords, InterpCoords_3d, m=m, n=n[1], which='H')
+    H_hw = _getGH(RealCoords, InterpCoords_3D, m=m, n=n[1], which='H')
     pot = _sphereSpline(data, G_hh=G_hh, H_hw=H_hw, smooth=smooth,
             type='CSD')
-    return (InterpCoords_2d[:,0].reshape(diameter_samples,
-                diameter_samples),
-            InterpCoords_2d[:,1].reshape(diameter_samples,
-                diameter_samples),
-            pot.reshape(diameter_samples, diameter_samples))
+    return (InterpCoords_2D[:,0].reshape(grid_size, grid_size),
+            InterpCoords_2D[:,1].reshape(grid_size, grid_size),
+            pot.reshape(grid_size, grid_size))
 
 def calcCSD(Coords, data, n=(7,20), m=4, smooth=1E-5, buffersize=64):
     """

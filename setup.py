@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='meet',
-      version='20140408',
+      version='20140410',
       description='Modular EEg Toolkit (MEET)',
       author='Gunnar Waterstraat',
       author_email='gunnar.waterstraat@gmx.de',
