@@ -51,6 +51,106 @@ from numpy.polynomial.legendre import legval as _legval
 from scipy.spatial import ConvexHull as _hull
 from matplotlib import path as _mpath
 
+def addHead(ax, lw=2.0, ec='k', **kwargs):
+    """
+    Add a path representing a a head consisting of
+    a circle with center (0,0) and r = 1 to the axis.
+
+    Input:
+    ------
+    --ax - a matplotlib axes instance into which the head will be drawn
+    --lw - linewidth - defaults to 2.0
+    --ec - edgecolor - defaults to black ('k')
+
+    Output:
+    -------
+    Nothing
+
+    Notes:
+    ------
+    Kwargs are matplotlib patches kwargs and are passed to
+    matplotlib.patches.PathPatch
+
+    Parts of the code (for drawing the circle) are from:
+    https://sourcegraph.com/github.com/matplotlib/matplotlib/symbols/python/lib/matplotlib/path/Path/circle
+    """
+
+    from matplotlib.patches import PathPatch as _PathPatch
+    #1st create circle
+    magic = 0.2652031
+    sqrthalf = _np.sqrt(0.5)
+    magic45 = _np.sqrt(magic**2 / 2.)
+    cvertices =  [ [0.0, -1.0],
+        
+                 [magic, -1.0],
+                 [sqrthalf-magic45, -sqrthalf-magic45],
+                 [sqrthalf, -sqrthalf],
+
+                 [sqrthalf+magic45, -sqrthalf+magic45],
+                 [1.0, -magic],
+                 [1.0, 0.0],
+
+                 [1.0, magic],
+                 [sqrthalf+magic45, sqrthalf-magic45],
+                 [sqrthalf, sqrthalf],
+
+                 [sqrthalf-magic45, sqrthalf+magic45],
+                 [magic, 1.0],
+                 [0.0, 1.0],
+
+                 [-magic, 1.0],
+                 [-sqrthalf+magic45, sqrthalf+magic45],
+                 [-sqrthalf, sqrthalf],
+
+                 [-sqrthalf-magic45, sqrthalf-magic45],
+                 [-1.0, magic],
+                 [-1.0, 0.0],
+
+                 [-1.0, -magic],
+                 [-sqrthalf-magic45, -sqrthalf+magic45],
+                 [-sqrthalf, -sqrthalf],
+
+                 [-sqrthalf+magic45, -sqrthalf-magic45],
+                 [-magic, -1.0],
+                 [0.0, -1.0],
+
+                 [0.0, -1.0]]
+
+    ccodes = [_mpath.Path.CURVE4] * 26
+    ccodes[0] = _mpath.Path.MOVETO
+    ccodes[-1] = _mpath.Path.CLOSEPOLY
+    # now create ears
+    rvertices = [[_np.sqrt(1-0.2**2), 0.2],
+
+                 [1.2, 0],
+                 [_np.sqrt(1-0.2**2), -0.2]]
+    rcodes = [_mpath.Path.MOVETO,
+              _mpath.Path.CURVE3,
+              _mpath.Path.CURVE3]
+    lvertices = [[-_np.sqrt(1-0.2**2), 0.2],
+
+                 [-1.2, 0],
+                 [-_np.sqrt(1-0.2**2), -0.2]]
+    lcodes = [_mpath.Path.MOVETO,
+              _mpath.Path.CURVE3,
+              _mpath.Path.CURVE3]
+    # now create nose
+    nvertices = [[-0.1,_np.sqrt(1 - 0.1**2)],
+                 [0,1.15],
+                 [0.1, _np.sqrt(1 - 0.1**2)]]
+    ncodes = [_mpath.Path.MOVETO,
+              _mpath.Path.LINETO,
+              _mpath.Path.LINETO]
+    #construct complete path
+    path = _mpath.Path(cvertices + rvertices + lvertices + nvertices,
+                       ccodes + rcodes + lcodes + ncodes)
+    #construct patch
+    patch = _PathPatch(path, transform=ax.transData, fill=False, lw=lw, ec=ec, **kwargs)
+    #add to axes
+    ax.add_patch(patch)
+    return
+
+
 def getStandardCoordinates(elecnames,fname='standard'):
     """
     Read (cartesian) Electrode Coordinates from tab-seperated text file

@@ -257,7 +257,7 @@ class plotEEG:
 
     def _recordMousePress(self, event):
         print 'Click at x: %f, y: %f' % (event.xdata, event.ydata)
-        self.clicks.append(event.xdata)
+        self.clicks.append(_np.argmin(_np.abs(self.t-event.xdata)))
         return
 
     def show(self):
