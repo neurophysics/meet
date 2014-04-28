@@ -15,6 +15,7 @@ from __future__ import division
 from . import _np
 from . import _linalg
 from . import _signal
+from _cSPoC import *
 
 def CSP(data1, data2, center=True):
     """
