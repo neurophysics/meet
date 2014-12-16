@@ -53,7 +53,7 @@ def pattern_from_filter(filter, X):
     if filter.ndim == 1: pat = pat[0]
     return pat
 
-def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15):
+def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15, x_ind=None, y_ind=None):
     """
     canonical Soure Power Correlation analysis (cSPoC)
     
@@ -71,9 +71,17 @@ def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15):
     ------
     Datasets X and Y can be either 2d numpy arrays of shape
     (channels x datapoints) or 3d array of shape
-    (channels x datapoints x trials). For 3d arrays the average envelope
-    in each trial is calculated. If log == True, then the log transform is
-    taken before the average inside the trial
+    (channels x datapoints x trials).
+    For 3d arrays the average envelope in each trial is calculated if x_ind
+    (or y_ind, respectively) is None. If they are set, the difference of
+    the instantaneous amplitude envelope at x_ind/y_ind and the average
+    envelope is calculated for each trial.
+    If log == True, then the log transform is taken before the average
+    inside the trial
+
+    If X and/or Y are of complex type, it is assumed that these are the
+    analytic representations of X and Y, i.e., the hilbert transform was
+    applied before.
     
     The filters are in the columns of the filter matrices Wx and Wy,
     for 2d input the data can be filtered as:
@@ -88,7 +96,10 @@ def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15):
     ------
     -- X numpy array - the first dataset of shape px x N (x tr), where px
                        is the number of sensors, N the number of data-
-                       points, tr the number of trials
+                       points, tr the number of trials. If X is of complex
+                       type it is assumed that this already is the
+                       analytic representation of X, i.e. the hilbert
+                       transform already was applied.
     -- Y is the second dataset of shape py x N (x tr)
     -- opt {'max', 'min'} - determines whether the correlation coefficient
                             should be maximized - seeks for positive
@@ -109,6 +120,12 @@ def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15):
                         individual filter pairs. The best filter over all
                         these restarts with random initializations is
                         chosen, defaults to 15.
+    -- x_ind int - the time index (-X.shape[1] <= x_ind < X.shape[1]) where
+                   the difference of the instantaneous envelope and the
+                   average envelope is determined for X
+    -- y_ind int - the time index (-Y.shape[1] <= y_ind < Y.shape[1]) where
+                   the difference of the instantaneous envelope and the
+                   average envelope is determined for Y
 
     Output:
     -------
@@ -133,15 +150,27 @@ def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15):
                                      + "or False)"
     assert isinstance(bestof, int), "\"bestof\" must be integer > 0"
     assert bestof > 0, "\"bestof\" must be integer > 0"
+    if x_ind != None:
+        assert X.ndim == 3, "If x_ind is set, X must be 3d array!"
+        assert isinstance(x_ind, int), "x_ind must be integer!"
+        assert ((x_ind >= -X.shape[1]) and
+                (x_ind < X.shape[1])), "x_ind must match the range of " +\
+                                       "X.shape[1]"
+    if y_ind != None:
+        assert Y.ndim == 3, "If y_ind is set, Y must be 3d array!"
+        assert isinstance(y_ind, int), "y_ind must be integer!"
+        assert ((y_ind >= -Y.shape[1]) and
+                (y_ind < Y.shape[1])), "y_ind must match the range of " +\
+                                       "Y.shape[1]"
     # get whitening transformations
     # for X
-    Whx, sx = _linalg.svd(X.reshape(X.shape[0],-1), full_matrices=False)[:2]
+    Whx, sx = _linalg.svd(X.reshape(X.shape[0],-1).real, full_matrices=False)[:2]
     #get rank
     px = (sx > (_np.max(sx) * _np.max([X.shape[0],_np.prod(X.shape[1:])]) *
           _np.finfo(X.dtype).eps)).sum()
     Whx = Whx[:,:px] / sx[:px][_np.newaxis]
     # for Y
-    Why, sy = _linalg.svd(Y.reshape(Y.shape[0],-1), full_matrices=False)[:2]
+    Why, sy = _linalg.svd(Y.reshape(Y.shape[0],-1).real, full_matrices=False)[:2]
     # get rank
     py = (sy > (_np.max(sy) * _np.max([Y.shape[0],_np.prod(Y.shape[1:])]) *
           _np.finfo(Y.dtype).eps)).sum()
@@ -149,9 +178,11 @@ def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15):
     # whiten the data
     X = _np.tensordot(Whx, X, axes = (0,0))
     Y = _np.tensordot(Why, Y, axes = (0,0))
-    # get hilber transform
-    X = _signal.hilbert(X, axis=1)
-    Y = _signal.hilbert(Y, axis=1)
+    # get hilbert transform (if not complex)
+    if not _np.iscomplexobj(X):
+        X = _signal.hilbert(X, axis=1)
+    if not _np.iscomplexobj(Y):
+        Y = _signal.hilbert(Y, axis=1)
     # get the final number of filters
     num = _np.min([num, px, py])
     # determine if correlation coefficient is maximized or minimized
@@ -165,8 +196,8 @@ def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15):
             optres = _np.array([
                      _minimize(func = _env_corr, fprime = None,
                                x0 = _np.random.random(px+py) * 2 -1,
-                               args = (X, Y, sign, log), m=100,
-                               approx_grad=False, iprint=1)[:2]
+                               args = (X, Y, sign, log, x_ind, y_ind),
+                               m=100, approx_grad=False, iprint=1)[:2]
                      for k in xrange(bestof)])
             # determine the best
             best = _np.argmin(optres[:,1])
@@ -188,8 +219,8 @@ def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15):
             optres = _np.array([
                      _minimize(func = _env_corr, fprime = None,
                                x0 = _np.random.random(px+py-2*i) * 2 -1,
-                               args = (Xb, Yb, sign, log), m=100,
-                               approx_grad=False, iprint=1)[:2]
+                               args = (Xb, Yb, sign, log, x_ind, y_ind),
+                               m=100, approx_grad=False, iprint=1)[:2]
                                for k in xrange(bestof)])
             # determine the best
             best = _np.argmin(optres[:,1])
@@ -207,7 +238,7 @@ def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15):
     Wy = Wy / _np.sqrt(_np.sum(Wy**2, 0))
     return _np.array(corr), Wx, Wy
 
-def _env_corr(wxy, Xa, Ya, sign=-1, log=True):
+def _env_corr(wxy, Xa, Ya, sign=-1, log=True, x_ind=None, y_ind=None):
     """
     The cSPoC objective function: the correlation
     of amplitude envelopes
@@ -221,9 +252,13 @@ def _env_corr(wxy, Xa, Ya, sign=-1, log=True):
     original datasets X and Y, hence they must be complex arrays.
     Xa and Ya can be either 2d numpy arrays of shape
     (channels x datapoints) or 3d array of shape
-    (channels x datapoints x trials). For 3d arrays the average envelope
-    in each trial is calculated. If log == True, then the log transform is
-    taken before the average inside the trial
+    (channels x datapoints x trials).
+    For 3d arrays the average envelope in each trial is calculated if x_ind
+    (or y_ind, respectively) is None. If they are set, the difference of
+    the instantaneous amplitude envelope at x_ind/y_ind and the average
+    envelope is calculated for each trial.
+    If log == True, then the log transform is taken before the average
+    inside the trial
 
     Input:
     ------
@@ -242,6 +277,12 @@ def _env_corr(wxy, Xa, Ya, sign=-1, log=True):
                            transformed envelopes, if datasets come in
                            epochs, then the log is taken before averaging
                            inside the epochs
+    -- x_ind int - the time index (-Xa.shape[1] <= x_ind < Xa.shape[1]),
+                   where the difference of the instantaneous envelope and
+                   the average envelope is determined for Xa
+    -- y_ind int - the time index (-Ya.shape[1] <= y_ind < Ya.shape[1]),
+                   where the difference of the instantaneous envelope and
+                   the average envelope is determined for Ya
 
     Output:
     -------
@@ -266,6 +307,18 @@ def _env_corr(wxy, Xa, Ya, sign=-1, log=True):
                                 "number of variables in Xa and Ya"
     assert isinstance(log, bool), "\"log\" must be a boolean (True or False)"
     assert sign in [-1, 1], "\"sign\" must be -1 or 1"
+    if x_ind != None:
+        assert Xa.ndim == 3, "If x_ind is set, Xa must be 3d array!"
+        assert isinstance(x_ind, int), "x_ind must be integer!"
+        assert ((x_ind >= -Xa.shape[1]) and
+                (x_ind < Xa.shape[1])), "x_ind must match the range of " +\
+                                        "Xa.shape[1]"
+    if y_ind != None:
+        assert Ya.ndim == 3, "If y_ind is set, Ya must be 3d array!"
+        assert isinstance(y_ind, int), "y_ind must be integer!"
+        assert ((y_ind >= -Ya.shape[1]) and
+                (y_ind < Ya.shape[1])), "y_ind must match the range of " +\
+                                        "Ya.shape[1]"
     wx = wxy[:p1]
     wy = wxy[p1:]
     # filter signal spatially
@@ -284,10 +337,16 @@ def _env_corr(wxy, Xa, Ya, sign=-1, log=True):
         envy_derwy = envy_derwy / y_env
         x_env = _np.log(x_env)
         y_env = _np.log(y_env)
-    if Xa.ndim == 3:
+    if ((Xa.ndim == 3) and (x_ind != None)):
+        envx_derwx = envx_derwx[:,x_ind] - envx_derwx.mean(1)
+        x_env = x_env[x_ind] - x_env.mean(0)
+    elif Xa.ndim == 3:
         envx_derwx = envx_derwx.mean(1)
         x_env = x_env.mean(0)
-    if Ya.ndim == 3:
+    if ((Ya.ndim == 3) and (y_ind != None)):
+        envy_derwy = envy_derwy[:,y_ind] - envy_derwy.mean(1)
+        y_env = y_env[y_ind] - y_env.mean(0)
+    elif Ya.ndim == 3:
         envy_derwy = envy_derwy.mean(1)
         y_env = y_env.mean(0)
     # remove mean of envelopes and derivatives
@@ -308,7 +367,7 @@ def _env_corr(wxy, Xa, Ya, sign=-1, log=True):
               _np.sqrt(_np.mean(x_env**2) * _np.mean(y_env**2)))
     return sign * corr, sign * _np.hstack([der_wx, der_wy])
 
-def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15):
+def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15, x_ind=None):
     """
     canonical Soure Power Auto-Correlation analysis (cSPoAC)
     
@@ -316,7 +375,7 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15):
     that the correlation of the amplitude envelopes wx.T.dot(X[:,:-tau])
     and wx.T.dot(X[:,tau:]) is maximized, i.e. it seeks a spatial filter
     to maximize the auto-correlation of amplitude envelopes for a shift
-    of tau.
+    of tau (example for X being 2D).
 
     The solution is inspired by and derived by the original cSPoC-Analysis
 
@@ -331,10 +390,15 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15):
     Dataset X can be either a 2d numpy array of shape
     (channels x datapoints) or 3d a array of shape
     (channels x datapoints x trials). For 2d array tau denotes a lag in
-    the time domain. For a 3d array the average envelope in each trial is
-    calculated and tau denotes a trial-wise lag.
+    the time domain, for 3d tau denotes a trial-wise lag.
+    For 3d arrays the average envelope in each trial is calculated if x_ind
+    is None. If it is set, the difference of the instantaneous amplitude
+    at x_ind and the average envelope is calculated for each trial.
+
     If log == True, then the log transform is taken before the average
     inside the trial
+    If X is of complex type, it is assumed that these is the analytic
+    representations of X, i.e., the hilbert transform was applied before.
     
     The filters are in the columns of the filter matrices Wx and Wy,
     for 2d input the data can be filtered as:
@@ -349,7 +413,10 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15):
     ------
     -- X numpy array - the dataset of shape px x N (x tr), where px is the
                        number of sensors, N the number of data-points, tr
-                       the number of trials
+                       the number of trials. If X is of complex
+                       type it is assumed that this already is the
+                       analytic representation of X, i.e. the hilbert
+                       transform already was applied.
     -- tau int - the lag to calculate the autocorrelation , if X.ndim==2,
                  this is a time-wise lag, if X.ndim==3, this is a trial-
                  wise lag.
@@ -371,6 +438,9 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15):
                         individual filter pairs. The best filter over all
                         these restarts with random initializations is
                         chosen, defaults to 15.
+    -- x_ind int - the time index (-X.shape[1] <= x_ind < X.shape[1]),
+                   where the difference of the instantaneous envelope and
+                   the average envelope is determined for X
 
     Output:
     -------
@@ -393,8 +463,14 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15):
                                      + "or False)"
     assert isinstance(bestof, int), "\"bestof\" must be integer > 0"
     assert bestof > 0, "\"bestof\" must be integer > 0"
+    if x_ind != None:
+        assert X.ndim == 3, "If x_ind is set, X must be 3d array!"
+        assert isinstance(x_ind, int), "x_ind must be integer!"
+        assert ((x_ind >= -X.shape[1]) and
+                (x_ind < X.shape[1])), "x_ind must match the range of " +\
+                                       "X.shape[1]"
     # get whitening transformation for X
-    Whx, sx = _linalg.svd(X.reshape(X.shape[0],-1), full_matrices=False)[:2]
+    Whx, sx = _linalg.svd(X.reshape(X.shape[0],-1).real, full_matrices=False)[:2]
     #get rank
     px = (sx > (_np.max(sx) * _np.max([X.shape[0],_np.prod(X.shape[1:])]) *
           _np.finfo(X.dtype).eps)).sum()
@@ -402,7 +478,8 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15):
     # whiten the data
     X = _np.tensordot(Whx, X, axes = (0,0))
     # get hilbert transform
-    X = _signal.hilbert(X, axis=1)
+    if not _np.iscomplexobj(X):
+        X = _signal.hilbert(X, axis=1)
     # get the final number of filters
     num = _np.min([num, px])
     # determine if correlation coefficient is maximized or minimized
@@ -416,7 +493,8 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15):
             optres = _np.array([
                      _minimize(func = _env_corr_same, fprime = None,
                                x0 = _np.random.random(px) * 2 -1,
-                               args = (X[:,:-tau], X[:,tau:], sign, log),
+                               args = (X[:,:-tau], X[:,tau:], sign, log,
+                               x_ind, x_ind),
                                m=100, approx_grad=False, iprint=1)[:2]
                      for k in xrange(bestof)])
             # determine the best
@@ -436,7 +514,8 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15):
             optres = _np.array([
                      _minimize(func = _env_corr_same, fprime = None,
                                x0 = _np.random.random(px-i) * 2 -1,
-                               args = (Xb[:,:-tau], Xb[:,tau:], sign, log),
+                               args = (Xb[:,:-tau], Xb[:,tau:], sign, log,
+                               x_ind, x_ind),
                                m=100, approx_grad=False, iprint=1)[:2]
                                for k in xrange(bestof)])
             # determine the best
@@ -450,7 +529,7 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15):
     Wx = Wx / _np.sqrt(_np.sum(Wx**2, 0))
     return _np.array(corr), Wx
 
-def _env_corr_same(wxy, Xa, Ya, sign=-1, log=True):
+def _env_corr_same(wxy, Xa, Ya, sign=-1, log=True, x_ind=None, y_ind=None):
     """
     The cSPoC objective function with same filters for both data sets:
     the correlation of amplitude envelopes
@@ -464,9 +543,13 @@ def _env_corr_same(wxy, Xa, Ya, sign=-1, log=True):
     original datasets X and Y, hence they must be complex arrays.
     Xa and Ya can be either 2d numpy arrays of shape
     (channels x datapoints) or 3d array of shape
-    (channels x datapoints x trials). For 3d arrays the average envelope
-    in each trial is calculated. If log == True, then the log transform is
-    taken before the average across the time axis in each trial.
+    (channels x datapoints x trials).
+    For 3d arrays the average envelope in each trial is calculated if x_ind
+    (or y_ind, respectively) is None. If they are set, the difference of
+    the instantaneous amplitude envelope at x_ind/y_ind and the average
+    envelope is calculated for each trial.
+    If log == True, then the log transform is taken before the average
+    inside the trial
 
     Input:
     ------
@@ -485,6 +568,12 @@ def _env_corr_same(wxy, Xa, Ya, sign=-1, log=True):
                            transformed envelopes, if datasets come in
                            epochs, then the log is taken before averaging
                            inside the epochs
+    -- x_ind int - the time index (-Xa.shape[1] <= x_ind < Xa.shape[1]),
+                   where the difference of the instantaneous envelope and
+                   the average envelope is determined for Xa
+    -- y_ind int - the time index (-Ya.shape[1] <= y_ind < Ya.shape[1]),
+                   where the difference of the instantaneous envelope and
+                   the average envelope is determined for Ya
 
     Output:
     -------
@@ -511,6 +600,18 @@ def _env_corr_same(wxy, Xa, Ya, sign=-1, log=True):
                            " number of variables in Xa and Ya"
     assert isinstance(log, bool), "\"log\" must be a boolean (True or False)"
     assert sign in [-1, 1], "\"sign\" must be -1 or 1"
+    if x_ind != None:
+        assert Xa.ndim == 3, "If x_ind is set, Xa must be 3d array!"
+        assert isinstance(x_ind, int), "x_ind must be integer!"
+        assert ((x_ind >= -Xa.shape[1]) and
+                (x_ind < Xa.shape[1])), "x_ind must match the range of " +\
+                                        "Xa.shape[1]"
+    if y_ind != None:
+        assert Ya.ndim == 3, "If y_ind is set, Ya must be 3d array!"
+        assert isinstance(y_ind, int), "y_ind must be integer!"
+        assert ((y_ind >= -Ya.shape[1]) and
+                (y_ind < Ya.shape[1])), "y_ind must match the range of " +\
+                                        "Ya.shape[1]"
     # filter signal spatially
     Xa_filt = _np.tensordot(wxy, Xa, axes=(0,0))
     Ya_filt = _np.tensordot(wxy, Ya, axes=(0,0))
@@ -527,10 +628,16 @@ def _env_corr_same(wxy, Xa, Ya, sign=-1, log=True):
         envy_derwy = envy_derwy / y_env
         x_env = _np.log(x_env)
         y_env = _np.log(y_env)
-    if Xa.ndim == 3:
+    if ((Xa.ndim == 3) and (x_ind != None)):
+        envx_derwx = envx_derwx[:,x_ind] - envx_derwx.mean(1)
+        x_env = x_env[x_ind] - x_env.mean(0)
+    elif Xa.ndim == 3:
         envx_derwx = envx_derwx.mean(1)
         x_env = x_env.mean(0)
-    if Ya.ndim == 3:
+    if ((Ya.ndim == 3) and (y_ind != None)):
+        envy_derwy = envy_derwy[:,y_ind] - envy_derwy.mean(1)
+        y_env = y_env[y_ind] - y_env.mean(0)
+    elif Ya.ndim == 3:
         envy_derwy = envy_derwy.mean(1)
         y_env = y_env.mean(0)
     # remove mean of envelopes and derivatives

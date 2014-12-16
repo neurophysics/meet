@@ -395,7 +395,7 @@ class ClassELM:
                         len(C_array))
         result = result**(1./folds)
         # fix C as the C with the best cv-result
-        C = C_array[_np.argmax(result)]
+        C = C_array[_np.nanargmax(result)]
         # now train the network with the final C
         print 'Cross-Validation finished, Training final network'
         self.train(data, labels, C=C, mem_size=mem_size, scale = False,
@@ -614,7 +614,7 @@ class ClassELM:
         if self.m == 1:
             return _np.sign(out).clip(0,1).astype(int)
         else:
-            return _np.argmax(out, -1).astype(int)
+            return _np.nanargmax(out, -1).astype(int)
     
     def _run(self, data, mem_size=512):
         '''

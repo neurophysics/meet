@@ -277,7 +277,7 @@ def bCSTP(trials1, trials2, num_iter=30, s_keep=2, t_keep=2,
     s_eigvals = []
     for i in xrange(num_iter):
         if verbose:
-            print 'Interation %d of %d total iterations.' % (i+1,
+            print 'Iteration %d of %d total iterations.' % (i+1,
                     num_iter)
         ######## get spatial filter ########
         #filter temporally
