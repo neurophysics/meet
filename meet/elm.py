@@ -244,7 +244,7 @@ def get_conf_matrix(true, pred, class_ratios=None):
                 'dimensionality of class_ratios must be 1')
         (assert len(class_ratios)==n,
                 'length of class_ratios must match number of classes')
-        conf_matrix = (conf_matrix.T / conf_matrix.sum(1) * class_ratios).T
+        conf_matrix = (conf_matrix.T / conf_matrix.sum(1).astype(float) * class_ratios).T
     return conf_matrix
 
 class ClassELM:
