@@ -122,8 +122,7 @@ def Matthews(conf_matrix):
     except:
         raise TypeError('conf_matrix must be numpy array or' +
                         'numpy matrix')
-    if not conf_matrix.shape == (2,2):
-        raise ValueError('conf_matrix must be of shape 2x2')
+    assert conf_matrix.shape == (2,2),'conf_matrix must be of shape 2x2'
     TN, FP, FN, TP = conf_matrix.ravel()
     try: MCC = _np.exp(_np.log(long(TP)*long(TN) - long(FP)*long(FN)) -
             (_np.log(TP+FP)+_np.log(TP+FN)+_np.log(TN+FP) + 
@@ -237,7 +236,7 @@ def get_conf_matrix(true, pred, class_ratios=None):
     # integers)
     n = _np.max([true, pred], None) + 1
     conf_matrix = _np.bincount(n * (true) + (pred),
-            minlength=n*n).reshape(n, n)
+            minlength=n*n).reshape(n, n).T
     if class_ratios != None:
         (assert isinstance(class_ratios, _np.ndarray),
                 'class_ratios must be None or 1d numpy array')
