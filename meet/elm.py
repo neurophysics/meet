@@ -201,7 +201,7 @@ def ssk_cv(data, labels, folds=3):
         result.append(list(chain.from_iterable(temp)))
     return result 
 
-def get_conf_matrix(true, pred):
+def get_conf_matrix(true, pred, class_ratios=None):
     '''
     Get a confusion matrix
     
@@ -209,6 +209,17 @@ def get_conf_matrix(true, pred):
     ------
     true - the true labels
     pred - the predicted labels
+    class_ratios - None or numpy array
+                 - the actual ratio of classes; if None, it is
+                 assumed that the actual class ratio equals the class
+                 ratio during cross-validation. If this is not true
+                 the actual class ratio can be given a numpy array
+                 of length (number of classes).
+                 class_ratios[0] is the actual frequency of class 0
+                 class_ratios[1] is the actual frequency of class 1
+                 .
+                 .
+                 .
     
     Output:
     -------
@@ -227,6 +238,14 @@ def get_conf_matrix(true, pred):
     n = _np.max([true, pred], None) + 1
     conf_matrix = _np.bincount(n * (true) + (pred),
             minlength=n*n).reshape(n, n)
+    if class_ratios != None:
+        (assert isinstance(class_ratios, _np.ndarray),
+                'class_ratios must be None or 1d numpy array')
+        (assert class_ratios.ndim==1, 
+                'dimensionality of class_ratios must be 1')
+        (assert len(class_ratios)==n,
+                'length of class_ratios must match number of classes')
+        conf_matrix = (conf_matrix.T / conf_matrix.sum(1) * class_ratios).T
     return conf_matrix
 
 class ClassELM:
@@ -266,7 +285,7 @@ class ClassELM:
 
     def cv(self, data, labels, method='ssk_cv', C_array=None, folds=3,
             precision_func='accuracy', scale = True, weights=True,
-            mem_size=512, verbose = True):
+            class_ratios=None, mem_size=512, verbose = True):
         '''
         Perform Cross-Validation of Extreme Learning Machine parameter C
         
@@ -329,7 +348,18 @@ class ClassELM:
                             expected to be in half-open interval [0,1) -
                             each class is "down-weighed" by this float
                             value, where the result depends on the ratio
-                            this values to each other 
+                            this values to each other
+        class_ratios - None or numpy array
+                     - the actual ratio of classes; if None, it is
+                     assumed that the actual class ratio equals the class
+                     ratio during cross-validation. If this is not true
+                     the actual class ratio can be given a numpy array
+                     of length (number of classes).
+                     class_ratios[0] is the actual frequency of class 0
+                     class_ratios[1] is the actual frequency of class 1
+                     .
+                     .
+                     .
         mem_size - int or float - default 512 - calculation is done in
                                   batches of this size in Mb
         
@@ -388,7 +418,7 @@ class ClassELM:
                 #method is no ignored since self._w already was
                 # initialized get the estimated labels
                 est_labels = self.classify(data[test], scale = False)
-                conf_matrix = get_conf_matrix(labels[test], est_labels)
+                conf_matrix = get_conf_matrix(labels[test], est_labels, class_ratios=class_ratios)
                 result[n] = result[n] * precision_func(conf_matrix)
             if ((verbose) and (n % 1 == 0)):
                 print 'Finished %d of %d Cross-Validations.' % (n+1,
