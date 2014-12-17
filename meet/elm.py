@@ -238,11 +238,11 @@ def get_conf_matrix(true, pred, class_ratios=None):
     conf_matrix = _np.bincount(n * (true) + (pred),
             minlength=n*n).reshape(n, n).T
     if class_ratios != None:
-        (assert isinstance(class_ratios, _np.ndarray),
+        assert isinstance(class_ratios, _np.ndarray), (
                 'class_ratios must be None or 1d numpy array')
-        (assert class_ratios.ndim==1, 
+        assert class_ratios.ndim==1, ( 
                 'dimensionality of class_ratios must be 1')
-        (assert len(class_ratios)==n,
+        assert len(class_ratios)==n, (
                 'length of class_ratios must match number of classes')
         conf_matrix = (conf_matrix.T / conf_matrix.sum(1).astype(float) * class_ratios).T
     return conf_matrix
