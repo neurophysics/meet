@@ -122,11 +122,13 @@ def Matthews(conf_matrix):
     except:
         raise TypeError('conf_matrix must be numpy array or' +
                         'numpy matrix')
-    assert conf_matrix.shape == (2,2),'conf_matrix must be of shape 2x2'
+    if not conf_matrix.shape == (2,2):
+            raise ValueError('conf_matrix must be of shape 2x2')
     TN, FP, FN, TP = conf_matrix.ravel()
-    try: MCC = _np.exp(_np.log(long(TP)*long(TN) - long(FP)*long(FN)) -
-            (_np.log(TP+FP)+_np.log(TP+FN)+_np.log(TN+FP) + 
-                _np.log(TN+FN)) / 2.)
+    N = conf_matrix.sum(None)
+    S = (TP + FN)/float(N)
+    P = (TP + FP)/float(N)
+    try: MCC = (TP/float(N) - S*P) / _np.sqrt(S*P*(1 - S)*(1 - P))
     except: MCC = 0
     return MCC
 
