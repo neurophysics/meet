@@ -238,7 +238,7 @@ def get_conf_matrix(true, pred, class_ratios=None):
     # integers)
     n = _np.max([true, pred], None) + 1
     conf_matrix = _np.bincount(n * (true) + (pred),
-            minlength=n*n).reshape(n, n).T
+            minlength=n*n).reshape(n, n)
     if class_ratios != None:
         assert isinstance(class_ratios, _np.ndarray), (
                 'class_ratios must be None or 1d numpy array')
