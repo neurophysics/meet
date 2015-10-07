@@ -12,49 +12,9 @@ This is the Modular EEg Toolkit (MEET) for Python 2.
 ***condition mustn't rely on this software.                          ***
 ************************************************************************
 
-Only Python 2 is supported at the moment, however modifications should
-be easy to do.
-
-Dependencies:
--------------
--Python 2
--Numpy
--Scipy
--Matplotlib
-
-Installation:
--------------
-Using the usual procedure:
-
-python setup.py build
-python setup.py install (be sure that the python executable is Python 2)
-
-Uninstallation:
----------------
-if you use pip you can uninstall doing:
-
-pip uninstall meet
-
-Version Compatibility:
-----------------------
-I try to avoid incompatibilities when updating functions,
-this however cannot be totaly avoided from time to time. However
-functions are thoroughly tested.
-
-Citation:
----------
-If you use this software for scientific publications please give proper
-citation.
-In the moment please cite as (or similar)
-G. Waterstraat, 2014. Modular EEg toolkit (MEET) for Python.
-https://github.com/neurophysics/meet. Retrieved on <date>
-
-There is a properly citable publication on the way as well which may be
-cited additionally.
-
 License:
 --------
-Copyright (c) 2014 Gunnar Waterstraat
+Copyright (c) 2015 Gunnar Waterstraat
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the
@@ -101,4 +61,3 @@ import iir
 import spatfilt
 import sphere
 import tf
-import tf_new

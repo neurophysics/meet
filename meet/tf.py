@@ -66,23 +66,17 @@ def _dyadic(N):
 
     Output:
     -------
-    -- f_centre
-    -- f_start
-    -- f_end
+    -- y
+    -- x
     '''
-    f_start = _np.array([0] + list(
-        2**_np.arange(int(_np.ceil(_np.log2(N)) - 1))))
-    f_centre = _np.where(f_start < 2, f_start+1,
-            (1.5*f_start + 1).astype(int)) 
-    f_width = _np.where(f_start < 2, 1, f_start)
-    f_end = _np.where(f_start + f_width <= N , f_start + f_width, N)
-    return f_centre.astype(int), f_start.astype(int), f_end.astype(int)
+    y =  _np.array([0] + list(2 ** _np.arange(int(_np.ceil(_np.log2(N)))-1)))
+    x = _np.where(y<2, 0, y//2)
+    return x,y
 
 def _full_sampling(N):
-    f_centre = _np.sort(_np.fft.fftfreq(N,1./N))
-    f_start = _np.ones_like(f_centre) * f_centre.min() -1
-    f_end = _np.ones_like(f_centre) * f_centre.max() + 1
-    return f_centre.astype(int), f_start.astype(int), f_end.astype(int)
+    y = _np.arange(N//2)
+    x = _np.ones_like(y) * N/2.
+    return x,y
 
 #FT of Window
 def _gaussian_ft(N, f):
@@ -118,6 +112,7 @@ def gft(sig, window='gaussian', axis=-1, sampling = 'full', full=False,
     '''
     #Step0: Preparational steps
     sig = sig.swapaxes(axis, 0) # Make the relevant axis axis 0
+    sig_mean = sig.mean(axis=0)
     sig = _signal.detrend(sig, axis=0, type='constant')
     N = sig.shape[0]
     if hanning == True:
@@ -125,66 +120,48 @@ def gft(sig, window='gaussian', axis=-1, sampling = 'full', full=False,
         if hann_N % 2 != 0:
             hann_N += 1
         hann = _signal.hanning(hann_N)
-        if sig.ndim == 1:
-            sig[:hann_N/2] = hann[:hann_N/2] * sig[:hann_N/2]
-            sig[-hann_N/2:] =hann[-hann_N/2:] * sig[-hann_N/2:]
-        else:
-            sig[:hann_N/2] = (hann[:hann_N/2,_np.newaxis] *
-                    sig[:hann_N/2])
-            sig[-hann_N/2:] = (hann[-hann_N/2:,_np.newaxis] *
-                    sig[-hann_N/2:])
+        sig[:hann_N/2] = (sig[:hann_N/2].T * hann[:hann_N/2]).T
+        sig[-hann_N/2:] = (sig[-hann_N/2:].T * hann[-hann_N/2:]).T
     if (not full in [True, 'True', 1, '1']) & _np.all(_np.isreal(sig)):
-        sig = _signal.hilbert(sig)
+        sig = _signal.hilbert(sig, axis=0)
     if window == 'gaussian': window = _gaussian_ft
     if type(sampling) == str:
         if sampling == 'dyadic': sampling = _dyadic
         if sampling == 'full': sampling = _full_sampling
-    sig_mean = sig.mean(axis=0)
     #Step1: FT of Signal
     sig = _np.fft.fft(sig, axis=0) # get fft of signal
     #Step2: Sampling Scheme
-    f_centre, f_start, f_end = sampling(N)
-    if (sampling == _full_sampling) & (full == False):
-        f_centre = f_centre[f_centre>=0]
-    if (full in [True, 'True', 1, '1']) & (f_centre.min() >= 0):
-        # add negative frequencies
-        if f_centre[0] == 0:
-            f_centre = _np.hstack([f_centre, f_centre[1:][::-1]*-1])
-            f_start = _np.hstack([f_start, f_start[1:][::-1]*-1])
-            f_end = _np.hstack([f_end, f_end[1:][::-1]*-1])
-        else:
-            f_centre = _np.hstack([f_centre[::-1]*-1, f_centre])
-            f_start = _np.hstack([f_start[::-1]*-1, f_start])
-            f_end = _np.hstack([f_end[::-1]*-1, f_end])
-    freqs = _np.fft.fftfreq(N, d= 1./N)
-    for k in xrange(len(f_centre)):
-        #freqs_r = freqs
-        freqs_r = _np.roll(freqs, -f_centre[k])
-        if f_start[k]>f_end[k]:
-            indices = _np.where((freqs_r < f_start[k]) & (freqs_r >=
-                f_end[k]))[0]
-        else:
-            indices = _np.where((freqs_r >= f_start[k]) & (freqs_r <
-                f_end[k]))[0]
-        if f_centre[k] == 0:
-            if sig.ndim ==1:
-                s = _np.ones(len(indices),float) * sig_mean
+    x,y = sampling(N)
+    for k in xrange(len(y)):
+        if y[k] != 0:
+            sig_r = _np.roll(sig, -y[k], axis=0)
+            win = window(N, y[k])
+            if x[k] == 0:
+                indices = _np.array([0])
             else:
-                s = _np.ones(_np.hstack((len(indices),
-                    sig.shape[1:])),float) * sig_mean[_np.newaxis,:]
-        else:   
-            #Step3: Get FT of Window
-            win = window(N, f_centre[k]) # get fourier transform of window
-            sig_r = _np.roll(sig, -f_centre[k], axis=0)
-            if sig.ndim > 1:
-                alpha = sig_r[indices] * win[indices][:, _np.newaxis]
+                if x[k] % 1 == 0:
+                    indices = _np.arange(-int(x[k]), int(x[k]), 1)
+                else:
+                    indices = _np.arange(-int(x[k]), int(x[k])+1, 1)
+            alpha = (sig_r[indices].T * win[indices]).T
+            s = _np.fft.ifft(_np.fft.ifftshift(alpha, axes=0), axis=0)
+        else:
+            if x[k] == 0:
+                s = _np.asanyarray(sig_mean)[_np.newaxis]
             else:
-                alpha = sig_r[indices] * win[indices] # multiply fourier of signal with shifted fourier of window
-            #Step 6: Construct S-Domain
-            s = _np.fft.ifft(alpha, axis=0)
-        t_step = N/float(len(s)) # find step size in time
-        t_now = _np.arange(0,N,t_step)  + t_step/2.
-        f_now = f_centre[k] * _np.ones_like(t_now)
+                if x[k] % 1 == 0:
+                    s = _np.ones([2*x[k]]+list(sig.shape[1:]),
+                        dtype = sig_mean.dtype) * (1./(2*x[k])) * sig_mean[_np.newaxis]
+                else:
+                    s = _np.ones([2*int(x[k]) + 1]+list(sig.shape[1:]),
+                        dtype = sig_mean.dtype) * (1./(2*x[k]+1)) * sig_mean[_np.newaxis]
+        #t_step = N/float(len(s)) # find step size in time
+        #t_now = _np.arange(0,N,t_step)  + t_step/2.
+        t_now = _np.linspace(0,N,len(s),endpoint=False)
+        # add half a step, so that it will always be in the center
+        t_now = t_now + (N - t_now[-1])/2.
+        #
+        f_now = y[k] * _np.ones_like(t_now)
         coords = _np.vstack([f_now, t_now])
         s = s.T
         if k == 0:
@@ -192,9 +169,9 @@ def gft(sig, window='gaussian', axis=-1, sampling = 'full', full=False,
             S = s
         else:
             Coords = _np.hstack([Coords,coords])
-            S = _np.hstack([S,s])
-    if axis == 0:
-        S = S.T
+            S = _np.concatenate([S,s], axis=-1)
+    if sig.ndim > 1:
+        S = S.swapaxes(0,axis)
     return Coords, S
 
 def interpolate_gft(Coords, S, IM_shape, data_len, kindf = 'nearest',
