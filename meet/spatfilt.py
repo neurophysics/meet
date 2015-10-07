@@ -279,10 +279,11 @@ def bCSTP(trials1, trials2, num_iter=30, s_keep=2, t_keep=2,
         'trials2')
     if num_iter < 10:
         raise ValueError('At least 10 iterations must be done.')
-    t_keep = _np.min([_np.hstack([[int(t_keep)] * 5,
-        _np.arange(6, num_iter+1, 1)])[::-1], [int(n_dp1)]*num_iter],0)
-    s_keep = _np.min([_np.hstack([[int(s_keep)] * 5,
-        _np.arange(6, num_iter+1, 1)])[::-1], [int(n_ch1)]*num_iter],0)
+    t_keep = _np.hstack([[int(t_keep)]*5,
+        _np.linspace(6, n_dp1, num_iter - 5).astype(int)])[::-1]
+    s_keep = _np.hstack([[int(s_keep)]*5,
+        _np.linspace(6, n_ch1 - 1, num_iter - 5).astype(int)])[::-1]
+
     # initialize output lists
     W = []
     V = [_np.identity(n_dp1, dtype=trials1.dtype)]
