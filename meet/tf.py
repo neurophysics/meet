@@ -84,7 +84,7 @@ def _gaussian_ft(N, f):
     win = _np.exp(x**2 * -1*2*_np.pi**2/float(f**2))
     return win
 
-def gft(sig, window='gaussian', axis=-1, sampling = 'full', full=False,
+def gft(sig, window='gaussian', axis=-1, sampling = 'full',
         hanning=True):
     '''
     Calculate the discrete general fourier family transform
@@ -96,8 +96,6 @@ def gft(sig, window='gaussian', axis=-1, sampling = 'full', full=False,
     -- axis - axis along which transform should be performed
     -- sampling - 'full'|'dyadic' - should the S-domain be sampled
                   completely, i.e. redundant or dyadic 
-    -- full - True|False - return also negative frequencies, standard
-              is False
     -- hanning - True|False - Apply a hanning window to 5% first and
                  last datapoints
     
@@ -122,7 +120,7 @@ def gft(sig, window='gaussian', axis=-1, sampling = 'full', full=False,
         hann = _signal.hanning(hann_N)
         sig[:hann_N/2] = (sig[:hann_N/2].T * hann[:hann_N/2]).T
         sig[-hann_N/2:] = (sig[-hann_N/2:].T * hann[-hann_N/2:]).T
-    if (not full in [True, 'True', 1, '1']) & _np.all(_np.isreal(sig)):
+    if _np.all(_np.isreal(sig)):
         sig = _signal.hilbert(sig, axis=0)
     if window == 'gaussian': window = _gaussian_ft
     if type(sampling) == str:
