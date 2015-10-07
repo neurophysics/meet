@@ -43,17 +43,22 @@ functions are thoroughly tested.
 Citation:
 ---------
 If you use this software for scientific publications please give proper
-citation.
-In the moment please cite as (or similar)
-G. Waterstraat, 2014. Modular EEg toolkit (MEET) for Python.
-https://github.com/neurophysics/meet. Retrieved on <date>
+citations.
 
-There is a properly citable publication on the way as well which may be
-cited additionally.
+Please cite any (or all):
+Waterstraat G, Burghoff M, Fedele T, Nikulin V, Scheer HJ, Curio G.
+Non-invasive single-trial EEG detection of evoked human neocortical population spikes.
+Neuroimage. 2015 Jan 15;105:13-20. doi: 10.1016/j.neuroimage.2014.10.024. Epub 2014 Oct 18.
+
+Waterstraat G, Fedele T, Burghoff M, Scheer HJ, Curio G.
+Recording human cortical population spikes non-invasively - An EEG tutorial.
+J Neurosci Methods. 2015 Jul 30;250:74-84. doi: 10.1016/j.jneumeth.2014.08.013. Epub 2014 Aug 27.
+
+https://github.com/neurophysics/meet. Retrieved on <date>
 
 License:
 --------
-Copyright (c) 2014 Gunnar Waterstraat
+Copyright (c) 2015 Gunnar Waterstraat
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the
