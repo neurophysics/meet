@@ -199,6 +199,12 @@ def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15, x_ind=None, y_ind=None):
                                args = (X, Y, sign, log, x_ind, y_ind),
                                m=100, approx_grad=False, iprint=1)[:2]
                      for k in xrange(bestof)])
+            # somehow, _minimize sometimes returns the wrong function value,
+            # so this is re-dertermined here
+            for k in xrange(bestof):
+                optres[k,1] = _env_corr(
+                        optres[k,0],
+                        X, Y, sign, log, x_ind, y_ind)[0]
             # determine the best
             best = _np.argmin(optres[:,1])
             # save results
@@ -222,6 +228,12 @@ def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15, x_ind=None, y_ind=None):
                                args = (Xb, Yb, sign, log, x_ind, y_ind),
                                m=100, approx_grad=False, iprint=1)[:2]
                                for k in xrange(bestof)])
+            # somehow, _minimize sometimes returns the wrong function value,
+            # so this is re-dertermined here
+            for k in xrange(bestof):
+                optres[k,1] = _env_corr(
+                        optres[k,0],
+                        Xb, Yb, sign, log, x_ind, y_ind)[0]
             # determine the best
             best = _np.argmin(optres[:,1])
             # save results
@@ -372,10 +384,12 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15, x_ind=None):
     canonical Soure Power Auto-Correlation analysis (cSPoAC)
     
     For the dataset X, find a linear filters wx, such
-    that the correlation of the amplitude envelopes wx.T.dot(X[:,:-tau])
-    and wx.T.dot(X[:,tau:]) is maximized, i.e. it seeks a spatial filter
+    that the correlation of the amplitude envelopes wx.T.dot(X[...,:-tau])
+    and wx.T.dot(X[...,tau:]) is maximized, i.e. it seeks a spatial filter
     to maximize the auto-correlation of amplitude envelopes for a shift
     of tau (example for X being 2D).
+    Alternatively tau can be an array of indices to X, such that
+    X[...,tau[0]] and X[...,tau[1]] defince the lag.
 
     The solution is inspired by and derived by the original cSPoC-Analysis
 
@@ -417,14 +431,17 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15, x_ind=None):
                        type it is assumed that this already is the
                        analytic representation of X, i.e. the hilbert
                        transform already was applied.
-    -- tau int - the lag to calculate the autocorrelation , if X.ndim==2,
-                 this is a time-wise lag, if X.ndim==3, this is a trial-
-                 wise lag.
-    -- opt {'max', 'min'} - determines whether the correlation coefficient
+    -- tau int or array of ints - the lag to calculate the autocorrelation,
+                                  if X.ndim==2, this is a time-wise lag, if
+                                  X.ndim==3, this is a trial-wise lag.
+                                  Alternatively tau can be an array of ints,
+                                  such that X[...,tau[0]] and X[...,tau[1]]
+                                  are correlated.
+    -- opt {'max', 'min', 'zero'} - determines whether the correlation coefficient
                             should be maximized - seeks for positive
                             correlations ('max', default);
                             or minimized - seeks for anti-correlations
-                            ('min')
+                            ('min'), ('zero') seeks for zero correlation
     -- num int > 0 - determine the number of filters that will be derived.
                      This depends also on the rank of X, if X is 2d, the
                      number of filter pairs will be: min([num, rank(X)]).
@@ -452,11 +469,27 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15, x_ind=None):
     #check input
     assert isinstance(X, _np.ndarray), "X must be numpy array"
     assert (X.ndim ==2 or X.ndim==3), "X must be 2D or 3D numpy array"
-    assert isinstance(tau, int), "tau must be integer-valued"
-    assert ((tau > 0) and (tau < (X.shape[1]-1))
-            ), "tau must be >0 and smaller than the second dim of X " +\
+    if isinstance(X, _np.ndarray):
+        try:
+            X[...,tau[0]]
+            X[...,tau[1]]
+        except:
+            raise ValueError("""
+                    If tau is an array, tau[0] and tau[1] must be subarrays
+                    of valid indices to X defining a certain lag, i.e., 
+                    the correlation between X[...,tau[0]] and X[...,tau[1]]
+                     is optimized""")
+    else:
+        assert isinstance(tau, int), "tau must be an array integer-valued"
+        assert ((tau > 0) and (tau < (X.shape[-1]-1))
+            ), "tau must be >0 and smaller than the last dim of X " +\
                "minus 1."
-    assert opt in ['max', 'min'], "\"opt\" must be \"max\" or \"min\""
+        tau = np.array([
+            np.arange(0,X.shape[-1]-tau,1),
+            np.arange(tau, X.shape[-1],1)
+            ])
+    assert opt in ['max', 'min', 'zero'], "\"opt\" must be \"max\", " +\
+            "\"min\" or \"zero\""
     assert isinstance(num, int), "\"num\" must be integer > 0"
     assert num > 0, "\"num\" must be integer > 0"
     assert log in [True, False, 0, 1], "\"log\" must be a boolean (True " \
@@ -484,7 +517,10 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15, x_ind=None):
     num = _np.min([num, px])
     # determine if correlation coefficient is maximized or minimized
     if opt == 'max': sign = -1
-    else: sign = 1
+    elif opt == 'min': sign = 1
+    elif opt == 'zero': sign = 0
+    else: raise ValueError("\"opt\" must be \"max\", " +\
+            "\"min\" or \"zero\"")
     # start optimization
     for i in xrange(num):
         if i == 0:
@@ -493,14 +529,24 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15, x_ind=None):
             optres = _np.array([
                      _minimize(func = _env_corr_same, fprime = None,
                                x0 = _np.random.random(px) * 2 -1,
-                               args = (X[:,:-tau], X[:,tau:], sign, log,
+                               args = (X[...,tau[0]], X[...,tau[1]], sign, log,
                                x_ind, x_ind),
                                m=100, approx_grad=False, iprint=1)[:2]
                      for k in xrange(bestof)])
-            # determine the best
+            # somehow, _minimize sometimes returns the wrong function value,
+            # so this is re-dertermined here
+            for k in xrange(bestof):
+                optres[k,1] = _env_corr_same(
+                        optres[k,0],
+                        X[...,tau[0]], X[...,tau[1]], sign, log,
+                               x_ind, x_ind)[0]
+            # determine the best_result
             best = _np.argmin(optres[:,1])
             # save results
-            corr = [sign * optres[best,1]]
+            if sign != 0:
+                corr = [sign * optres[best,1]]
+            else:
+                corr = [optres[best,1]]
             filt = optres[best,0]
         else:
             # get consecutive pairs of filters
@@ -514,14 +560,24 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15, x_ind=None):
             optres = _np.array([
                      _minimize(func = _env_corr_same, fprime = None,
                                x0 = _np.random.random(px-i) * 2 -1,
-                               args = (Xb[:,:-tau], Xb[:,tau:], sign, log,
+                               args = (Xb[...,tau[0]], Xb[...,tau[1]], sign, log,
                                x_ind, x_ind),
                                m=100, approx_grad=False, iprint=1)[:2]
                                for k in xrange(bestof)])
-            # determine the best
+            # somehow, _minimize sometimes returns the wrong function value,
+            # so this is re-dertermined here
+            for k in xrange(bestof):
+                optres[k,1] = _env_corr_same(
+                        optres[k,0],
+                        Xb[...,tau[0]], Xb[...,tau[1]], sign, log,
+                               x_ind, x_ind)[0]
+            # determine the best result
             best = _np.argmin(optres[:,1])
             # save results
-            corr = corr + [sign * optres[best,1]]
+            if sign != 0:
+                corr = corr + [sign * optres[best,1]]
+            else:
+                corr = corr + [optres[best,1]]
             filt = _np.column_stack([filt, Bx.dot(optres[best,0])])
     # project filters back into original (un-whitened) channel space
     Wx = Whx.dot(filt)
@@ -599,7 +655,7 @@ def _env_corr_same(wxy, Xa, Ya, sign=-1, log=True, x_ind=None, y_ind=None):
     assert len(wxy) == p1, "Length of wxy must equal the" + \
                            " number of variables in Xa and Ya"
     assert isinstance(log, bool), "\"log\" must be a boolean (True or False)"
-    assert sign in [-1, 1], "\"sign\" must be -1 or 1"
+    assert sign in [-1, 1, 0], "\"sign\" must be -1, 1, or 0"
     if x_ind != None:
         assert Xa.ndim == 3, "If x_ind is set, Xa must be 3d array!"
         assert isinstance(x_ind, int), "x_ind must be integer!"
@@ -661,4 +717,253 @@ def _env_corr_same(wxy, Xa, Ya, sign=-1, log=True, x_ind=None, y_ind=None):
     corr = num / denom
     #final derivative
     corr_d = (num_d*denom - num*denom_d) / denom**2
-    return sign * corr, sign * corr_d
+    if sign == 0:
+        return _np.sign(corr)*corr, _np.sign(corr)*corr_d
+    else:
+        return sign*corr, sign*corr_d
+
+def cSPoAvgC(X, opt='max', num=1, log=True, bestof=15):
+    """
+    canonical Soure Power Average Correlation analysis (cSPoAvgC)
+    
+    For the dataset X, find a linear filters wx, such
+    that the average correlation of the amplitude envelopes of wx.T.dot(X)
+    and (wx.T.dot(X)).mean(-1) is maximized, i.e. it seeks a spatial filter
+    to maximize the correlation of amplitude envelopes and their average.
+
+    The solution is inspired by and derived by the original cSPoC-Analysis
+
+    Reference:
+    ----------
+    Dahne, S., et al., Finding brain oscillations with power dependencies
+    in neuroimaging data, NeuroImage (2014),
+    http://dx.doi.org/10.1016/j.neuroimage.2014.03.075
+
+    Notes:
+    ------
+    Dataset X must be a 3d a array of shape
+    (channels x datapoints x trials).
+    
+    If log == True, then the log transform is taken before the average
+    inside the trial
+    
+    If X is of complex type, it is assumed that these is the analytic
+    representations of X, i.e., the hilbert transform was applied before.
+    
+    The filters are in the columns of the filter matrices Wx
+    
+    The input data can be filtered as:    
+    
+    np.tensordot(Wx, X, axes=(0,0))
+
+    Input:
+    ------
+    -- X numpy array - the dataset of shape px x N x tr, where px is the
+                       number of sensors, N the number of data-points, tr
+                       the number of trials. If X is of complex
+                       type it is assumed that this already is the
+                       analytic representation of X, i.e. the hilbert
+                       transform already was applied.
+    -- opt {'max', 'min', 'zero'} - determines whether the correlation coefficient
+                            should be maximized - seeks for positive
+                            correlations ('max', default);
+                            or minimized - seeks for anti-correlations
+                            ('min'), ('zero') seeks for zero correlation
+    -- num int > 0 - determine the number of filters that will be derived.
+                     This depends also on the rank of X, if X is 2d, the
+                     number of filter pairs will be: min([num, rank(X)]).
+                     If X is 3d, the array is flattened into a 2d array
+                     before calculating the rank
+    -- log {True, False} - compute the correlation between the log-
+                           transformed envelopes, if datasets come in
+                           epochs, then the log is taken before averaging
+                           inside the epochs, defaults to True
+    -- bestof int > 0 - the number of restarts for the optimization of the
+                        individual filter pairs. The best filter over all
+                        these restarts with random initializations is
+                        chosen, defaults to 15.
+    Output:
+    -------
+    corr - numpy array - the canonical correlations of the amplitude
+                         envelopes for each filter
+    Wx - numpy array - the filters for X, each filter is in a column of Wx
+                       (if num==1: Wx is 1d)
+    """
+    #check input
+    assert isinstance(X, _np.ndarray), "X must be numpy array"
+    assert (X.ndim==3), "X must be 3D numpy array"
+    assert opt in ['max', 'min', 'zero'], "\"opt\" must be \"max\", " +\
+            "\"min\" or \"zero\""
+    assert isinstance(num, int), "\"num\" must be integer > 0"
+    assert num > 0, "\"num\" must be integer > 0"
+    assert log in [True, False, 0, 1], "\"log\" must be a boolean (True " \
+                                     + "or False)"
+    assert isinstance(bestof, int), "\"bestof\" must be integer > 0"
+    assert bestof > 0, "\"bestof\" must be integer > 0"
+    # get whitening transformation for X
+    Whx, sx = _linalg.svd(X.reshape(X.shape[0],-1).real, full_matrices=False)[:2]
+    #get rank
+    px = (sx > (_np.max(sx) * _np.max([X.shape[0],_np.prod(X.shape[1:])]) *
+          _np.finfo(X.dtype).eps)).sum()
+    Whx = Whx[:,:px] / sx[:px][_np.newaxis]
+    # whiten the data
+    X = _np.tensordot(Whx, X, axes = (0,0))
+    # get hilbert transform
+    if not _np.iscomplexobj(X):
+        X = _signal.hilbert(X, axis=1)
+    # get the final number of filters
+    num = _np.min([num, px])
+    # determine if correlation coefficient is maximized or minimized
+    if opt == 'max': sign = -1
+    elif opt == 'min': sign = 1
+    elif opt == 'zero': sign = 0
+    else: raise ValueError("\"opt\" must be \"max\", " +\
+            "\"min\" or \"zero\"")
+    # start optimization
+    for i in xrange(num):
+        if i == 0:
+            # get first filter
+            # get best parameters and function values of each run
+            optres = _np.array([
+                     _minimize(func = _env_corr_avg, fprime = None,
+                               x0 = _np.random.random(px) * 2 -1,
+                               args = (X, sign, log), m=100,
+                                   approx_grad=False, iprint=1)[:2]
+                     for k in xrange(bestof)])
+            # somehow, _minimize sometimes returns the wrong function value,
+            # so this is re-dertermined here
+            for k in xrange(bestof):
+                optres[k,1] = _env_corr_avg(
+                        optres[k,0],
+                        X, sign, log)[0]
+            # determine the best_result
+            best = _np.argmin(optres[:,1])
+            # save results
+            if sign != 0:
+                corr = [sign * optres[best,1]]
+            else:
+                corr = [optres[best,1]]
+            filt = optres[best,0]
+        else:
+            # get consecutive pairs of filters
+            # project data into null space of previous filters
+            # this is done by getting the right eigenvectors of the filter
+            # maxtrix corresponding to vanishing eigenvalues
+            Bx = _linalg.svd(_np.atleast_2d(filt.T),
+                             full_matrices=True)[2][i:].T
+            Xb = _np.tensordot(Bx,X, axes=(0,0))
+            # get best parameters and function values of each run
+            optres = _np.array([
+                     _minimize(func = _env_corr_avg, fprime = None,
+                               x0 = _np.random.random(px-i) * 2 -1,
+                               args = (Xb, sign, log),
+                               m=100, approx_grad=False, iprint=1)[:2]
+                               for k in xrange(bestof)])
+            # somehow, _minimize sometimes returns the wrong function value,
+            # so this is re-dertermined here
+            for k in xrange(bestof):
+                optres[k,1] = _env_corr_avg(
+                        optres[k,0],
+                        Xb, sign, log)[0]
+            # determine the best result
+            best = _np.argmin(optres[:,1])
+            # save results
+            if sign != 0:
+                corr = corr + [sign * optres[best,1]]
+            else:
+                corr = corr + [optres[best,1]]
+            filt = _np.column_stack([filt, Bx.dot(optres[best,0])])
+    # project filters back into original (un-whitened) channel space
+    Wx = Whx.dot(filt)
+    #normalize filters to have unit length
+    Wx = Wx / _np.sqrt(_np.sum(Wx**2, 0))
+    return _np.array(corr), Wx
+
+def _env_corr_avg(wxy, Xa, sign=-1, log=True):
+    """
+    The cSPoC objective function to maximize correlation  of single-trial
+    envelopes to average envelope.
+
+    Additionally, it returns the gradients of the objective function
+    with respect to each of the filter coefficient.
+
+    Notes:
+    ------
+    The input datasets Xa is the analytic representations of the
+    original datasets X, hence it must be a complex array.
+    Xa must be a 3d array of shape (channels x datapoints x trials).
+    If log == True, then the log transform is taken before the average
+    inside the trial
+
+    Input:
+    ------
+    -- wxy is the array of shared filter coefficients for x and y
+    -- Xa - numpy array - complex analytic representation of X
+         Xa is the first Hilbert-transformed dataset of shape px x N x tr,
+         where px is the number of sensors, N the number of datapoints, tr
+         the number of trials
+    -- sign {-1, 1} - the correlation coefficient is multiplied with this
+                      number. If the result of this function is minimized
+                      -1 should be used to find maximum correlation, 1
+                      should be used to find maximal anti-correlation,
+                      defaults to -1
+    -- log {True, False} - compute the correlation between the log-
+                           transformed envelopes, if datasets come in
+                           epochs, then the log is taken before averaging
+                           inside the epochs
+    Output:
+    -------
+    -- c - float - the correlation coefficient of the amplitude envelopes
+                   of X and Y multiplied by the value of \"sign\"
+    -- c_der - numpy array - the gradient of c with respect to each of the
+                             coefficients in wxy
+    """
+    assert isinstance(Xa, _np.ndarray), "Xa must be numpy array"
+    assert _np.iscomplexobj(Xa), "Xa must be a complex-type numpy array" +\
+                                 ", i.e. the analytic representaion of X"
+    assert (Xa.ndim==3), "Xa must be  3D numpy array"
+    p1 = Xa.shape[0]
+    assert len(wxy) == p1, "Length of wxy must equal the" + \
+                           " number of variables in Xa"
+    assert isinstance(log, bool), "\"log\" must be a boolean (True or False)"
+    assert sign in [-1, 1, 0], "\"sign\" must be -1, 1, or 0"
+    # filter signal spatially
+    Xa_filt = _np.tensordot(wxy, Xa, axes=(0,0))
+    # get envelope of filtered signal
+    x_env = _np.abs(Xa_filt)
+    # get derivatives of envelopes
+    envx_derwx = ((Xa_filt.real * Xa.real +
+                   Xa_filt.imag * Xa.imag) / x_env)
+    if log:
+        envx_derwx = envx_derwx / x_env
+        x_env = _np.log(x_env)
+    # remove mean of envelopes and derivatives
+    x_env = x_env - x_env.mean(0)
+    envx_derwx = envx_derwx - envx_derwx.mean(1)[:,_np.newaxis]
+    # numerator of correlation
+    num = _np.mean(
+                (x_env * x_env.mean(-1)[:,_np.newaxis]),
+                0)
+    # derivative of numerator
+    num_d = _np.mean(
+                envx_derwx*x_env.mean(-1)[:,_np.newaxis] +
+                x_env*envx_derwx.mean(-1)[:,:,_np.newaxis],
+                1)
+    # denominator of correlation
+    denom = _np.sqrt(_np.mean(x_env**2,0) *
+            _np.mean(x_env.mean(-1)**2,0))
+    # derivative of denominator
+    denom_d = ( 
+     (_np.mean(x_env*envx_derwx,1)*_np.mean(x_env.mean(-1)**2,0)) +
+     _np.mean(x_env**2,0)*_np.mean(x_env.mean(-1)*
+         envx_derwx.mean(-1),1)[:,_np.newaxis]
+     ) / denom
+    #final correlation
+    corr = _np.mean(num / denom)
+    #final derivative
+    corr_d = ((num_d*denom - num*denom_d) / denom**2).mean(-1)
+    if sign == 0:
+        return _np.sign(corr)*corr, _np.sign(corr)*corr_d
+    else:
+        return sign*corr, sign*corr_d
+

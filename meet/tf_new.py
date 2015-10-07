@@ -155,8 +155,12 @@ def gft(sig, window='gaussian', axis=-1, sampling = 'full', full=False,
                 else:
                     s = _np.ones([2*int(x[k]) + 1]+list(sig.shape[1:]),
                         dtype = sig_mean.dtype) * (1./(2*x[k]+1)) * sig_mean[_np.newaxis]
-        t_step = N/float(len(s)) # find step size in time
-        t_now = _np.arange(0,N,t_step)  + t_step/2.
+        #t_step = N/float(len(s)) # find step size in time
+        #t_now = _np.arange(0,N,t_step)  + t_step/2.
+        t_now = _np.linspace(0,N,len(s),endpoint=False)
+        # add half a step, so that it will always be in the center
+        t_now = t_now + (N - t_now[-1])/2.
+        #
         f_now = y[k] * _np.ones_like(t_now)
         coords = _np.vstack([f_now, t_now])
         s = s.T
@@ -165,9 +169,9 @@ def gft(sig, window='gaussian', axis=-1, sampling = 'full', full=False,
             S = s
         else:
             Coords = _np.hstack([Coords,coords])
-            S = _np.hstack([S,s])
-    if axis == 0:
-        S = S.T
+            S = _np.concatenate([S,s], axis=-1)
+    if sig.ndim > 1:
+        S = S.swapaxes(0,axis)
     return Coords, S
 
 def interpolate_gft(Coords, S, IM_shape, data_len, kindf = 'nearest',

@@ -132,6 +132,57 @@ def Matthews(conf_matrix):
     except: MCC = 0
     return MCC
 
+def PPV2DR1(conf_matrix):
+    """
+    Calculate the weighted average (WA) of Positive Preditive Value (PPV)
+    and Detection Rate (DR):
+
+    WA = (2*PPV + DR) / 3.
+
+    Input:
+    ------
+    conf_matrix - shape 2 x 2, where 2 is the number of classes
+                 the rows belong to the actual, the columns to the
+                 predicted class: item ij is hence predicted as class j,
+                 while it would have belonged to class i
+                 AN ERROR IS THROWN IF THE SHAPE OF THE MATRIX IS NOT
+                 CORRECT
+
+    Output:
+    -------
+    float - the WA
+    """
+    PPV_result = PPV(conf_matrix)
+    DR_result = DR(conf_matrix)
+    return (2*PPV_result + DR_result)/3.
+
+def DR(conf_matrix):
+    '''
+    Calculate the Detection Rate
+
+    Input:
+    ------
+    conf_matrix - shape 2 x 2, where 2 is the number of classes
+                 the rows belong to the actual, the columns to the
+                 predicted class: item ij is hence predicted as class j,
+                 while it would have belonged to class i
+                 AN ERROR IS THROWN IF THE SHAPE OF THE MATRIX IS NOT
+                 CORRECT
+
+    Output:
+    -------
+    float - the PPV
+    '''
+    try: conf_matrix.shape
+    except:
+        raise TypeError('conf_matrix must be numpy array or numpy' +
+                        'matrix')
+    if not conf_matrix.shape == (2,2):
+        raise ValueError('conf_matrix must be of shape 2x2')
+    TN, FP, FN, TP = conf_matrix.ravel()
+    DR_result = TP / float(TP+FN)
+    return DR_result
+
 def PPV(conf_matrix):
     '''
     Calculate the Positive Predictive Value
@@ -156,8 +207,8 @@ def PPV(conf_matrix):
     if not conf_matrix.shape == (2,2):
         raise ValueError('conf_matrix must be of shape 2x2')
     TN, FP, FN, TP = conf_matrix.ravel()
-    PPV = TP / float(TP+FP)
-    return PPV
+    PPV_result = TP / float(TP+FP)
+    return PPV_result
 
 def ssk_cv(data, labels, folds=3):
     '''
@@ -323,6 +374,11 @@ class ClassELM:
                                                   Predictive Value -
                                                   Only for binary
                                                   classification
+                                                'PPV2DR1' - The weighted
+                                                  average of Positive
+                                                  Predictive Value (PPV)
+                                                  and Detection Rate (DR):
+                                                  (2*PPV + DR)/3.
                        - if function: with confusion matrix as single
                          input and float (0,1) as single output
         scale - bool (True | False) - whether data should be scaled to
@@ -386,6 +442,8 @@ class ClassELM:
                 precision_func = Matthews
             elif precision_func == 'PPV':
                 precision_func = PPV
+            elif precision_func == 'PPV2DR1':
+                precision_func = PPV2DR1
             else:
                 raise Exception('The function \'%s\' is not' +
                 'implemented (yet?).' % (precision_func))

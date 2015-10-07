@@ -163,10 +163,10 @@ def interpolateEEG(data, markers, win, interpolate_type='mchs'):
              17.   ,  18.   ,  19.   ]])
     """
     interpolpts = [_np.arange(m+win[0], m+win[1],1) for m in markers] 
-    interpolpts = _np.sort(_np.ravel(interpolpts))
-    have_indices = _np.ones(data.shape[1],bool)
+    interpolpts = _np.unique(_np.ravel(interpolpts))
+    have_indices = _np.ones(data.shape[-1],bool)
     have_indices[interpolpts] = False
-    x = _np.arange(data.shape[1])[have_indices]
+    x = _np.arange(data.shape[-1])[have_indices]
     if interpolate_type == 'linear':
         from scipy.interpolate import interp1d as interp
         f = interp(x, data[:,have_indices], axis=-1)

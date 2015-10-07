@@ -50,6 +50,7 @@ from . import _packdir
 from numpy.polynomial.legendre import legval as _legval
 from scipy.spatial import ConvexHull as _hull
 from matplotlib import path as _mpath
+from scipy.linalg import solve as _solve
 
 def addHead(ax, lw=2.0, ec='k', **kwargs):
     """
@@ -64,7 +65,7 @@ def addHead(ax, lw=2.0, ec='k', **kwargs):
 
     Output:
     -------
-    Nothing
+    -- patch - the constructed circle
 
     Notes:
     ------
@@ -148,8 +149,7 @@ def addHead(ax, lw=2.0, ec='k', **kwargs):
     patch = _PathPatch(path, transform=ax.transData, fill=False, lw=lw, ec=ec, **kwargs)
     #add to axes
     ax.add_patch(patch)
-    return
-
+    return patch
 
 def getStandardCoordinates(elecnames,fname='standard'):
     """
@@ -412,14 +412,15 @@ def _getGH(coords1, coords2, m=4, n=7, which='G'):
     -- G (if which == 'G')
     -- H (if which == 'H')
     '''
-    coords1 = coords1.astype(float)
-    coords2 = coords2.astype(float)
+    # use 128bit precision, so that the matrix is invertible
+    coords1 = coords1.astype(_np.float128)
+    coords2 = coords2.astype(_np.float128)
     # cosine of angle is the inner product divided by the product of
     # 2-norms
     cos_angle = (coords1.dot(coords2.T) /
             ((coords1**2).sum(1)[:,_np.newaxis] *
                 (coords2**2).sum(1)[_np.newaxis]))
-    N = _np.arange(1,n+1,1, dtype=float)
+    N = _np.arange(1,n+1,1, dtype=_np.float128)
     if which == 'G':
         #evaluate Legendre polynomial
         c_g = ( 2*N + 1) / (N**2 + N)**m #coefficients for g
@@ -457,7 +458,7 @@ def _sphereSpline(data, G_hh, G_hw=None, H_hw=None, smooth=0,
     num_batches = int(_np.ceil((data.nbytes / n ) /
         float(buffersize*1024**2)))
     delims = _np.linspace(0, n, num_batches+1, endpoint=True)
-    #add smothing parameter to G
+    #add smoothing parameter to G
     G_hh[range(p), range(p)] = G_hh[range(p), range(p)] + smooth
     #change g to solve matrix system
     G_hh = _np.ma.hstack([_np.ones([G_hh.shape[0],1], G_hh.dtype),
@@ -469,14 +470,25 @@ def _sphereSpline(data, G_hh, G_hw=None, H_hw=None, smooth=0,
     for i in xrange(num_batches):
         #c0 is first row, the other cs are in the following rows,
         #each column is for one datapoint of n
-        C = _np.linalg.solve(G_hh, _np.vstack([_np.ones(delims[i+1] - 
+        C = _solve(G_hh, _np.vstack([_np.zeros(delims[i+1] - 
             delims[i], data.dtype), data[:,delims[i]:delims[i+1]]]))
+        ############################################################
+        # check that the results of C match with what was expexted #
+        ############################################################
+        assert _np.allclose(_np.dot(G_hh,C),
+                _np.vstack([_np.zeros(delims[i+1] -
+                    delims[i], data.dtype), data[:,delims[i]:delims[i+1]]])
+                ), ('increase smoothing or number of legendre ' +
+                'polynomials to evaluate')
+        assert _np.allclose(C[1:].sum(0),0), ('increase smoothing or '
+                'number of legendre polynomials to evaluate')
+        ############################################################
         if type == 'Interpolation':
             out.append(C[0,:] + _np.ma.dot(G_hw.T, C[1:], strict=True))
         elif type == 'CSD':
             out.append(_np.ma.dot(H_hw.T, C[1:], strict=True))
         else: raise ValueError('Type must be Interpolation or CSD')
-    result = _np.ma.hstack(out)
+    result = _np.ma.hstack(out).astype(data.dtype)
     if _np.all(result.mask == False):
         return result.data
     else:

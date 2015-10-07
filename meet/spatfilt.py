@@ -52,6 +52,18 @@ def CSP(data1, data2, center=True):
           matrix (in order of decreasing eigenvalues)
     -- eigvals - eigenvalues in decreasing order
     """
+    if not type(data1) == _np.ndarray:
+        raise TypeError('data1 must be numpy array')
+    if not type(data2) == _np.ndarray:
+        raise TypeError('data2 must be numpy array')
+    if not data1.ndim == 2:
+        raise ValueError('data1 must be a 2d numpy array -' +
+                'dimensionality is wrong')
+    if not data2.ndim == 2:
+        raise ValueError('data2 must be a 2d numpy array -' +
+                'dimensionality is wrong')
+    if not type(center) == bool:
+        raise TypeError('center must be a boolean')
     p1, n1 = data1.shape
     p2, n2 = data2.shape
     #remove mean
@@ -59,15 +71,16 @@ def CSP(data1, data2, center=True):
         data1 = _signal.detrend(data1, axis=1, type='constant')
         data2 = _signal.detrend(data2, axis=1, type='constant')
     #normalize by signal length to have equal weights on all points
-    data1 = data1
     data2 = data2 / _np.sqrt(n2/float(n1))
     #whiten for data2
+    #W1, s = _linalg.svd(data2, full_matrices = False)[:2]
     W1, s = _linalg.svd(data2, full_matrices = False)[:2]
     #get rank
     rank1 = (s > (_np.max(s) * _np.max(data2.shape) *
         _np.finfo(data2.dtype).eps)).sum()
     # scale by singular values to get whitening matrix
     W = W1[:,:rank1] / s[:rank1][_np.newaxis]
+    #W2, s2 = _linalg.svd(W.T.dot(data1), full_matrices = False)[:2]
     W2, s2 = _linalg.svd(W.T.dot(data1), full_matrices = False)[:2]
     rank2 = (s2 > (_np.max(s2) * _np.max([W.shape[1], data1.shape[1]]) *
         _np.finfo(data1.dtype).eps)).sum()
@@ -119,12 +132,12 @@ def CCA_data(X,Y):
     if M1 != M2:
         raise ValueError('number of observations (columns) in X and Y' +
         'does not match.')
-    if P1 <= 1:
+    if P1 < 1:
         raise ValueError('number of Variables in X must be larger' +
-        'than 1')
-    if P2 <= 1:
+        'than 0')
+    if P2 < 1:
         raise ValueError('number of Variables in Y must be larger' +
-        'than 1')
+        'than 0')
     ####################################################################
     #remove mean
     X = _signal.detrend(X, axis=1, type='constant')
