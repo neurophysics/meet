@@ -461,9 +461,9 @@ def _sphereSpline(data, G_hh, G_hw=None, H_hw=None, smooth=0,
     #add smoothing parameter to G
     G_hh[range(p), range(p)] = G_hh[range(p), range(p)] + smooth
     #change g to solve matrix system
-    G_hh = _np.ma.hstack([_np.ones([G_hh.shape[0],1], G_hh.dtype),
+    G_hh = _np.hstack([_np.ones([G_hh.shape[0],1], G_hh.dtype),
         G_hh])
-    G_hh = _np.ma.vstack([_np.ones([1,G_hh.shape[1]], G_hh.dtype),
+    G_hh = _np.vstack([_np.ones([1,G_hh.shape[1]], G_hh.dtype),
         G_hh])
     G_hh[0,0] = 0
     out = []
