@@ -214,7 +214,7 @@ def getStandardCoordinates(elecnames,fname='standard'):
     for item in elecnames:
         if item in coords:
             coords_result.append(
-            _np.dot(TransMat, coords[item]))
+            _np.linalg.lstsq(TransMat.T, coords[item])[0])
         else:
             coords_result.append(
                 _np.array([_np.nan,_np.nan,_np.nan])) # if not in file

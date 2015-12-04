@@ -71,7 +71,7 @@ def _dyadic(N):
     '''
     y =  _np.array([0] + list(2 ** _np.arange(int(_np.ceil(_np.log2(N)))-1)))
     x = _np.where(y<2, 0, y//2)
-    return x,y
+    return x,y+x
 
 def _full_sampling(N):
     y = _np.arange(N//2)
@@ -137,7 +137,7 @@ def gft(sig, window='gaussian', axis=-1, sampling = 'full',
             if x[k] == 0:
                 indices = _np.array([0])
             else:
-                if x[k] % 1 == 0:
+                if x[k] % 2 == 0:
                     indices = _np.arange(-int(x[k]), int(x[k]), 1)
                 else:
                     indices = _np.arange(-int(x[k]), int(x[k])+1, 1)
@@ -147,7 +147,7 @@ def gft(sig, window='gaussian', axis=-1, sampling = 'full',
             if x[k] == 0:
                 s = _np.asanyarray(sig_mean)[_np.newaxis]
             else:
-                if x[k] % 1 == 0:
+                if x[k] % 2 == 0:
                     s = _np.ones([2*x[k]]+list(sig.shape[1:]),
                         dtype = sig_mean.dtype) * (1./(2*x[k])) * sig_mean[_np.newaxis]
                 else:
