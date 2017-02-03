@@ -118,8 +118,8 @@ def gft(sig, window='gaussian', axis=-1, sampling = 'full',
         if hann_N % 2 != 0:
             hann_N += 1
         hann = _signal.hanning(hann_N)
-        sig[:hann_N/2] = (sig[:hann_N/2].T * hann[:hann_N/2]).T
-        sig[-hann_N/2:] = (sig[-hann_N/2:].T * hann[-hann_N/2:]).T
+        sig[:hann_N//2] = (sig[:hann_N//2].T * hann[:hann_N//2]).T
+        sig[-hann_N//2:] = (sig[-hann_N//2:].T * hann[-hann_N//2:]).T
     if _np.all(_np.isreal(sig)):
         sig = _signal.hilbert(sig, axis=0)
     if window == 'gaussian': window = _gaussian_ft

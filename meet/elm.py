@@ -319,7 +319,7 @@ class ClassELM:
     
     after cross-validation or training use
     
-    self.classifiy()
+    self.classify()
     '''
     def __init__(self, L=1000, kernel='sigmoid'):
         if type(L) == int: self.L = L

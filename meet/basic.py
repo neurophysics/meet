@@ -78,16 +78,18 @@ def readBinary(fname,num_channels,channels='all',readnum_dp='all',
     filesize = getsize(fname)
     #get number of datapoints
     data_num = filesize // bytenum // num_channels
-    if channels =='all':
-        channels = _np.arange(num_channels)
-    if readnum_dp =='all':
-        readnum_dp = data_num
+    if type(channels) == str:
+        if channels == 'all':
+            channels = _np.arange(num_channels)
+    if type(readnum_dp) == str:
+        if readnum_dp is 'all':
+            readnum_dp = data_num
     fd = open(fname,'rb') #open file
     # get number of batches to read dataset
     bytequot = int(int(buffermem * 1024**2 / bytenum) -
                (buffermem * 1024**2 / bytenum) % num_channels)
     batchnum = int(_np.ceil(num_channels*readnum_dp / float(bytequot)))
-    num_dp_per_batch = bytequot / num_channels
+    num_dp_per_batch = bytequot // num_channels
     readnum_ch = len(channels)
     data = _np.empty([readnum_ch,readnum_dp],dtype='<'+id+str(bytenum))
     if (((num_channels*readnum_dp) % bytequot == 0) or

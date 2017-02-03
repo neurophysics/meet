@@ -457,7 +457,7 @@ def _sphereSpline(data, G_hh, G_hw=None, H_hw=None, smooth=0,
     # get number of batches
     num_batches = int(_np.ceil((data.nbytes / n ) /
         float(buffersize*1024**2)))
-    delims = _np.linspace(0, n, num_batches+1, endpoint=True)
+    delims = _np.linspace(0, n, num_batches+1, endpoint=True).astype(int)
     #add smoothing parameter to G
     G_hh[range(p), range(p)] = G_hh[range(p), range(p)] + smooth
     #change g to solve matrix system
@@ -549,10 +549,13 @@ def potMap(RealCoords, data, diameter_samples=200, n=(7,7), m=4,
     RealCoords_2D = projectSphereOnCircle(RealCoords, projection=projection)
     # get the convex hull of 2d points
     hull = _hull(RealCoords_2D[_np.all(_np.isfinite(RealCoords_2D),1)])
-    # the final grid will be quadratic, so the extent of the grid is equal for x and y
-    grid_extent = _np.abs(RealCoords_2D[_np.all(_np.isfinite(RealCoords_2D),1)][hull.vertices]).max(None)
-    grid_size = diameter_samples * grid_extent # along the equator diameter_samples should be plotted,
-                                               # if the grid extent is smaller or larger scale adequately
+    # the final grid will be quadratic, so the extent of the grid is equal for x
+    # and y
+    grid_extent = _np.abs(RealCoords_2D[_np.all(_np.isfinite(RealCoords_2D),
+        1)][hull.vertices]).max(None)
+    # along the equator diameter_samples should be plotted,
+    # if the grid extent is smaller or larger scale adequately
+    grid_size = int(_np.ceil(diameter_samples * grid_extent))
     x = _np.linspace(-grid_extent, grid_extent, grid_size, endpoint=True)
     X, Y = _np.meshgrid(x,x)
     InterpCoords_2D = _np.column_stack([X.ravel(), Y.ravel()])
