@@ -131,7 +131,6 @@ def trap2tri(L, overwrite=False, check=False):
             raise TypeError('overwrite must be a boolean')
     if not overwrite:
         L = L.copy() # if not done, L will be overwritten
-    n,r = L.shape
     Q = np.eye(n)
     if r != n:
         for j in xrange(r-1,-1,-1):
