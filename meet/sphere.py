@@ -9,7 +9,7 @@ Algorithm from  Perrin et al., Electroenceph Clin Neurophysiol 1989,
 While the implementation was done independently, the code was tested
 using the sample data of the CSD Toolbox for Matlab
 (http://psychophysiology.cpmc.columbia.edu/Software/CSDtoolbox/)
-and results are the same. Thanks a lot th Juergen Kayer for sharing his
+and results are the same. Thanks a lot to Juergen Kayer for sharing his
 work there.
 
 Example:
@@ -50,7 +50,11 @@ from . import _packdir
 from numpy.polynomial.legendre import legval as _legval
 from scipy.spatial import ConvexHull as _hull
 from matplotlib import path as _mpath
-from scipy.linalg import solve as _solve
+
+# ECOD is used to solve linear equations
+from ECOD import ECOD_LS as _solve
+
+from numpy.linalg import cond as _cond
 
 def addHead(ax, lw=2.0, ec='k', **kwargs):
     """
@@ -412,15 +416,12 @@ def _getGH(coords1, coords2, m=4, n=7, which='G'):
     -- G (if which == 'G')
     -- H (if which == 'H')
     '''
-    # use 128bit precision, so that the matrix is invertible
-    coords1 = coords1.astype(_np.float128)
-    coords2 = coords2.astype(_np.float128)
     # cosine of angle is the inner product divided by the product of
     # 2-norms
     cos_angle = (coords1.dot(coords2.T) /
             ((coords1**2).sum(1)[:,_np.newaxis] *
                 (coords2**2).sum(1)[_np.newaxis]))
-    N = _np.arange(1,n+1,1, dtype=_np.float128)
+    N = _np.arange(1,n+1,1, dtype=float)
     if which == 'G':
         #evaluate Legendre polynomial
         c_g = ( 2*N + 1) / (N**2 + N)**m #coefficients for g
@@ -468,20 +469,16 @@ def _sphereSpline(data, G_hh, G_hw=None, H_hw=None, smooth=0,
     G_hh[0,0] = 0
     out = []
     for i in xrange(num_batches):
-        #c0 is first row, the other cs are in the following rows,
+        # check if G_hh is ill-conditioned
+        if _cond(G_hh) >= 1./_np.finfo(_np.float64).eps:
+            raise UserWarning('Interpolation problem is ill-conditioned.' +
+                    '\n' + 'Consider increasing smoothing or order of' + 
+                    ' Legendre polynomial.')
+        #c0 is first row of C, the other cs are in the following rows of C,
         #each column is for one datapoint of n
-        C = _solve(G_hh, _np.vstack([_np.zeros(delims[i+1] - 
-            delims[i], data.dtype), data[:,delims[i]:delims[i+1]]]))
-        ############################################################
-        # check that the results of C match with what was expexted #
-        ############################################################
-        assert _np.allclose(_np.dot(G_hh,C),
-                _np.vstack([_np.zeros(delims[i+1] -
-                    delims[i], data.dtype), data[:,delims[i]:delims[i+1]]])
-                ), ('increase smoothing or number of legendre ' +
-                'polynomials to evaluate')
-        assert _np.allclose(C[1:].sum(0),0), ('increase smoothing or '
-                'number of legendre polynomials to evaluate')
+        C = _solve(G_hh.astype(_np.float64), _np.vstack([_np.zeros(delims[i+1] - 
+            delims[i], data.dtype), data[:,delims[i]:delims[i+1]]]).astype(
+                _np.float64))
         ############################################################
         if type == 'Interpolation':
             out.append(C[0,:] + _np.ma.dot(G_hw.T, C[1:], strict=True))
