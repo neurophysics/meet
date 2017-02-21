@@ -4,7 +4,7 @@ Spatial Filters
 Submodule of the Modular EEg Toolkit - MEET for Python.
 
 This module implements some spatial filters such as CSP, CCA, CCAvReg,
-bCSTP and QCA.
+bCSTP, cSPoC, PCO.
 
 Author & Contact
 ----------------
@@ -16,6 +16,7 @@ from . import _np
 from . import _linalg
 from . import _signal
 from _cSPoC import *
+from _PCO import *
 
 def CSP(data1, data2, center=True):
     """
