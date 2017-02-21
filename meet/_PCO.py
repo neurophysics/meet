@@ -11,11 +11,9 @@ from scipy.optimize import fmin_l_bfgs_b as _minimize
 
 if __name__ != '__main__':
     from . import _np
-    from . import _scipy
     from . import _linalg
 else:
     import numpy as _np
-    import scipy as _scipy
     import scipy.linalg as _linalg
 
 def PCOa(a, Y, num=1, bestof=15):
