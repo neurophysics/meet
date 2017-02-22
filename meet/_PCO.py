@@ -84,7 +84,7 @@ def PCOa(a, Y, num=1, bestof=15):
           _np.finfo(Y.dtype).eps)).sum()
     Why = Why[:,:py] / sy[:py][_np.newaxis]
     # whiten for the real part of the data
-    Y = _np.tensordot(Why, Y, axes = (0,0))
+    Y = _np.dot(Why.T, Y)
     # get the final number of filters
     num = _np.min([num, py])
     ######################
@@ -118,7 +118,7 @@ def PCOa(a, Y, num=1, bestof=15):
             # maxtrix corresponding to vanishing eigenvalues
             By = _linalg.svd(_np.atleast_2d(filt.T),
                              full_matrices=True)[2][i:].T
-            Yb = _np.tensordot(By,Y, axes=(0,0))
+            Yb = _np.dot(By.T,Y)
             # get best parameters and function values of each run
             optres = _np.array([
                      _minimize(func = _PCOa_obj_der, fprime = None,
