@@ -193,7 +193,7 @@ def getStandardCoordinates(elecnames,fname='standard'):
     #make all elecnames uppercase
     elecnames = [e.upper() for e in elecnames]
     from csv import reader
-    filereader = reader(open(fname), delimiter='\t')
+    filereader = reader(open(fname, 'r'), delimiter='\t')
     coords = dict([(row[0].upper(),row[1:4]) for row in filereader])
     #get origin of the used coordinate system
     x0 = _np.array([coords['T7'][0],coords['T8'][0]],dtype=float).mean()
@@ -248,7 +248,7 @@ def getChannelNames(fname):
     ['C1', 'C3']
     """
     from csv import reader
-    filereader = reader(open(fname), delimiter='\t', quotechar='"')
+    filereader = reader(open(fname, 'r'), delimiter='\t', quotechar='"')
     elecnames = dict([(row[0].upper(),int(row[1])) 
         for row in filereader])
     from operator import itemgetter
