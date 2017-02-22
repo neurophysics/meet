@@ -317,7 +317,7 @@ def getMarker(marker, width=50, mindist=100):
     results = _np.array([-mindist] +
             list(_np.where(_np.all([marker[:-1] * marker[1:] < 0,
                 marker[:-1] < 0], axis=0))[0])) # find zero crossings
-    results = np.hstack([results[0],
+    results = _np.hstack([results[0],
         results[1:][_np.diff(results) > mindist]])
     results = results + int(width/2.)
     return results[_np.all([results > 0, results < len(marker)],0)]
