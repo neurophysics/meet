@@ -75,7 +75,7 @@ def _dyadic(N):
 
 def _full_sampling(N):
     y = _np.arange(N//2)
-    x = _np.ones_like(y) * N/2.
+    x = _np.ones_like(y) * N//2
     return x,y
 
 #FT of Window
