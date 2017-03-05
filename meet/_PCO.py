@@ -52,8 +52,6 @@ def PCOa(a, Y, num=1, bestof=15):
         raise TypeError('a must be iterable of floats')
     if not a.ndim == 1:
         raise ValueError('a must be 1-dimensional')
-    #if not _np.all(a>0):
-    #    raise ValueError('all amplitudes in a must be > 0')
     ###
     try:
         Y = _np.asarray(Y)
@@ -75,6 +73,10 @@ def PCOa(a, Y, num=1, bestof=15):
         raise TypeError('bestof must be integer')
     if not bestof > 0:
         raise ValueError('bestof must be > 0')
+    #####################################################
+    # normalize a to have zero mean and a variance of 1 #
+    #####################################################
+    a = (a - a.mean())/a.std()
     ######################################
     # Whiten the (real part of the) data #
     ######################################
@@ -156,7 +158,8 @@ def _PCOa_obj_der(w, a, Y, sign=-1, return_der=True, check_input=True):
     Input:
     ------
     w - (1d numpy array, float) filter coefficients
-    a - (1d numpy array, floats > 0) amplitudes
+    a - (1d numpy array, floats > 0) amplitudes, it is assumed that
+        a has a mean of 0 and variance of 1
     Y - (2d numpy array, complex) analytic representation of signal,
         channels x datapoints
     sign {-1, 1} - the result is multiplied with this number. If the
@@ -193,8 +196,10 @@ def _PCOa_obj_der(w, a, Y, sign=-1, return_der=True, check_input=True):
             raise TypeError('a must be iterable of floats')
         if not a.ndim == 1:
             raise ValueError('a must be 1-dimensional')
-        if not _np.all(a>0):
-            raise ValueError('all amplitudes in a must be > 0')
+        if not _np.isclose(a.mean(),0):
+            raise ValueError('the mean of a must be 0')
+        if not _np.isclose(a.std(),1):
+            raise ValueError('the standard deviation of a must be 1')
         ###
         try:
             Y = _np.asarray(Y)
@@ -220,24 +225,23 @@ def _PCOa_obj_der(w, a, Y, sign=-1, return_der=True, check_input=True):
     # start calculation of mean vector length and its partial derivatives #
     #######################################################################
     filt = w.dot(Y)
-    phase = _np.angle(filt)
+    filt_norm = filt/_np.abs(filt)
     ####################################
     # result of the objective function #
     ####################################
-    a_norm = (a - a.mean())/a.std()
-    sum1_no_square = _np.mean(a_norm * _np.cos(phase),-1)
-    sum2_no_square = _np.mean(a_norm * _np.sin(phase),-1)
+    sum1_no_square = _np.mean(a * filt_norm.real, -1)
+    sum2_no_square = _np.mean(a * filt_norm.imag, -1)
     obj = _np.sqrt(sum1_no_square**2 + sum2_no_square**2)
     if return_der:
         # partial derivative of phase
         phase_dwi = ((-Y.real*filt.imag + Y.imag*filt.real)/
                 (filt.real**2 + filt.imag**2))
         # derivative of first summand
-        sum1_d = (2*sum1_no_square*
-                _np.mean(-a_norm*_np.sin(phase)*phase_dwi,-1))
+        sum1_d = 2*sum1_no_square*_np.einsum('...j,ij->i',
+                -a*filt_norm.imag, phase_dwi)/len(a)
         # derivative of second summand
-        sum2_d = (2*sum2_no_square*
-                _np.mean( a_norm*_np.cos(phase)*phase_dwi,-1))
+        sum2_d = 2*sum2_no_square*_np.einsum('...j,ij->i',
+                a*filt_norm.real, phase_dwi)/len(a)
         # derivative of sum
         sum_d = sum1_d + sum2_d
         # derivative including square root
@@ -257,10 +261,9 @@ if __name__ == "__main__":
     a = _np.random.rand(N_amp)
     #a[-N_dp//4:] = 1000
     # normalize a
-    a = a / a.mean()
+    a = (a - a.mean())/a.std()
     # get marker
-    marker = _np.sort(_np.random.random_integers(
-        low=0, high=N_dp, size=N_amp))
+    marker = _np.sort(_np.random.randint(low=0, high=N_dp, size=N_amp))
     # get random phases
     p = _np.random.uniform(-_np.pi, _np.pi, N_amp)
     #
