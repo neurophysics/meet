@@ -23,7 +23,7 @@ def _seconds_formatter(t, pos):
     return '%02d:%02d' % (t // 60, t % 60)
 
 _x_axis_formatter = _FuncFormatter(_seconds_formatter)
-_line_props = [{'color': '0'}, {'color': '0.5'}]
+_line_props = [{'color': 'k'}, {'color': 'r'}]
 
 #detect screen resolution
 import Tkinter as _Tk
