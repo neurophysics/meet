@@ -150,7 +150,8 @@ def addHead(ax, lw=2.0, ec='k', **kwargs):
     path = _mpath.Path(cvertices + rvertices + lvertices + nvertices,
                        ccodes + rcodes + lcodes + ncodes)
     #construct patch
-    patch = _PathPatch(path, transform=ax.transData, fill=False, lw=lw, ec=ec, **kwargs)
+    patch = _PathPatch(path, transform=ax.transData, fill=False, lw=lw,
+            ec=ec, **kwargs)
     #add to axes
     ax.add_patch(patch)
     return patch
@@ -261,7 +262,7 @@ def projectCoordsOnSphere(coords):
     (0,0,0) and radius 1. 
     For the input coordinates it is believed that they lie on a
     sphere with center (0,0,0) and radius r = x**2 + y**2 + Z**2.
-    Subsequently this radius is scaled th 1, preserving altitude
+    Subsequently this radius is scaled to 1, preserving altitude
     and azimuth of the original coordinates.
 
     Input:
@@ -286,34 +287,6 @@ def projectCoordsOnSphere(coords):
     t = _np.sqrt(1./ ((coords**2).sum(axis=-1)))
     out_coords = t[:,_np.newaxis]*coords
     return out_coords
-
-#def meshCircle(d_samples=100):
-#    """
-#    Calculate a meshgrid containing the points of a circle
-#    (center (0,0) and radius 1)
-#    
-#    Input:
-#    ------
-#    -- d_samples - number of points along the diameter
-#
-#    Output:
-#    -------
-#    -- coords - masked 2D array containing the coordinates in rows
-#              - 1st column: x
-#              - 2nd column: y
-#       (everything otside a unit sphere is masked)
-#    """
-#    coords = []
-#    x = y = _np.linspace(-1, 1, d_samples, endpoint=True)
-#    X, Y = _np.meshgrid(x,y)
-#    #X = X.ravel()
-#    #Y = Y.ravel()
-#    #remove points outside the circle
-#    #inlier  = X**2 + Y**2 <= 1
-#    #return _np.array([X[inlier], Y[inlier]]).T
-#    X = _np.ma.masked_where(X**2 + Y**2 > 1, X)
-#    Y = _np.ma.masked_where(X**2 + Y**2 > 1, Y)
-#    return _np.ma.column_stack([_np.ma.ravel(X), _np.ma.ravel(Y)])
 
 def projectCircleOnSphere(coords, projection = 'stereographic'):
     """
@@ -427,7 +400,8 @@ def _getGH(coords1, coords2, m=4, n=7, which='G'):
         c_g = ( 2*N + 1) / (N**2 + N)**m #coefficients for g
         #start with 1st (not 0st) polynomial
         c_g = _np.hstack([[0], c_g])
-        result = _legval(cos_angle, c_g) / (4 * _np.pi) # this is G in the Perrin publication
+        result = _legval(cos_angle, c_g) / (4 * _np.pi) # this is G in the
+                                                        # Perrin publication
     elif which == 'H':
         c_h = (-2*N - 1) / (N**2 + N)**(m-1) #coefficients for h
         #start with 1st (not 0st) polynomial
@@ -556,13 +530,14 @@ def potMap(RealCoords, data, diameter_samples=200, n=(7,7), m=4,
     x = _np.linspace(-grid_extent, grid_extent, grid_size, endpoint=True)
     X, Y = _np.meshgrid(x,x)
     InterpCoords_2D = _np.column_stack([X.ravel(), Y.ravel()])
-    mask = _insideHull(InterpCoords_2D, RealCoords_2D[_np.all(_np.isfinite(RealCoords_2D),1)][hull.vertices])
     InterpCoords_3D = projectCircleOnSphere(InterpCoords_2D)
     G_hh = _getGH(RealCoords, RealCoords, m=m, n=n[0], which='G')
     G_hw = _getGH(RealCoords, InterpCoords_3D, m=m, n=n[1], which='G')
     pot = _sphereSpline(data, G_hh=G_hh, G_hw=G_hw, smooth=smooth,
             type='Interpolation')
     #mask all points outside the hull of existing Coordinates
+    mask = _insideHull(InterpCoords_2D, RealCoords_2D[
+        _np.all(_np.isfinite(RealCoords_2D),1)][hull.vertices])
     pot = _np.ma.masked_where(~_np.column_stack([mask,mask]), pot)
     return (InterpCoords_2D[:,0].reshape(grid_size, grid_size),
             InterpCoords_2D[:,1].reshape(grid_size, grid_size),
@@ -611,23 +586,25 @@ def csdMap(RealCoords, data, diameter_samples=200, n=(7,20), m=4,
     RealCoords_2D = projectSphereOnCircle(RealCoords, projection=projection)
     # get the convex hull of 2d points
     hull = _hull(RealCoords_2D[_np.all(_np.isfinite(RealCoords_2D),1)])
-    # the final grid will be quadratic, so the extent of the grid is equal for x and y
-    grid_extent = _np.abs(RealCoords_2D[_np.all(_np.isfinite(RealCoords_2D),1)][hull.vertices]).max(None)
-    grid_size = diameter_samples * grid_extent # along the equator diameter_samples should be plotted,
-                                               # if the grid extent is smaller or larger scale adequately
+    # the final grid will be quadratic, so the extent of the grid is equal
+    # for x and y
+    grid_extent = _np.abs(RealCoords_2D[
+        _np.all(_np.isfinite(RealCoords_2D),1)][hull.vertices]).max(None)
+    # along the equator diameter_samples should be plotted,
+    # if the grid extent is smaller or larger scale adequately
+    grid_size = diameter_samples * grid_extent 
     x = _np.linspace(-grid_extent, grid_extent, grid_size, endpoint=True)
     X, Y = _np.meshgrid(x,x)
     InterpCoords_2D = _np.column_stack([X.ravel(), Y.ravel()])
-    #mask all points outside the hull of existing Coordinates
-    mask = _insideHull(InterpCoords_2D, RealCoords_2D[_np.all(_np.isfinite(RealCoords_2D),1)][hull.vertices])
-    InterpCoords_2D = _np.ma.masked_where(
-            ~_np.column_stack([mask,mask]),
-            InterpCoords_2D)
     InterpCoords_3D = projectCircleOnSphere(InterpCoords_2D)
     G_hh = _getGH(RealCoords, RealCoords, m=m, n=n[0], which='G')
     H_hw = _getGH(RealCoords, InterpCoords_3D, m=m, n=n[1], which='H')
     pot = _sphereSpline(data, G_hh=G_hh, H_hw=H_hw, smooth=smooth,
             type='CSD')
+    # mask all points outside the hull of existing Coordinates
+    mask = _insideHull(InterpCoords_2D, RealCoords_2D[
+        _np.all(_np.isfinite(RealCoords_2D),1)][hull.vertices])
+    pot = _np.ma.masked_where(~_np.column_stack([mask,mask]), pot)
     return (InterpCoords_2D[:,0].reshape(grid_size, grid_size),
             InterpCoords_2D[:,1].reshape(grid_size, grid_size),
             pot.reshape(grid_size, grid_size))
