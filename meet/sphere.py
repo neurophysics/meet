@@ -218,7 +218,7 @@ def getStandardCoordinates(elecnames,fname='standard'):
     for item in elecnames:
         if item in coords:
             coords_result.append(
-            _np.linalg.lstsq(TransMat.T, coords[item])[0])
+            _np.linalg.lstsq(TransMat.T, coords[item], rcond=None)[0])
         else:
             coords_result.append(
                 _np.array([_np.nan,_np.nan,_np.nan])) # if not in file
@@ -556,16 +556,14 @@ def potMap(RealCoords, data, diameter_samples=200, n=(7,7), m=4,
     x = _np.linspace(-grid_extent, grid_extent, grid_size, endpoint=True)
     X, Y = _np.meshgrid(x,x)
     InterpCoords_2D = _np.column_stack([X.ravel(), Y.ravel()])
-    #mask all points outside the hull of existing Coordinates
     mask = _insideHull(InterpCoords_2D, RealCoords_2D[_np.all(_np.isfinite(RealCoords_2D),1)][hull.vertices])
-    InterpCoords_2D = _np.ma.masked_where(
-            ~_np.column_stack([mask,mask]),
-            InterpCoords_2D)
     InterpCoords_3D = projectCircleOnSphere(InterpCoords_2D)
     G_hh = _getGH(RealCoords, RealCoords, m=m, n=n[0], which='G')
     G_hw = _getGH(RealCoords, InterpCoords_3D, m=m, n=n[1], which='G')
     pot = _sphereSpline(data, G_hh=G_hh, G_hw=G_hw, smooth=smooth,
             type='Interpolation')
+    #mask all points outside the hull of existing Coordinates
+    pot = _np.ma.masked_where(~_np.column_stack([mask,mask]), pot)
     return (InterpCoords_2D[:,0].reshape(grid_size, grid_size),
             InterpCoords_2D[:,1].reshape(grid_size, grid_size),
             pot.reshape(grid_size, grid_size))
