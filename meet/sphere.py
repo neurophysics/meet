@@ -538,7 +538,7 @@ def potMap(RealCoords, data, diameter_samples=200, n=(7,7), m=4,
     #mask all points outside the hull of existing Coordinates
     mask = _insideHull(InterpCoords_2D, RealCoords_2D[
         _np.all(_np.isfinite(RealCoords_2D),1)][hull.vertices])
-    pot = _np.ma.masked_where(~_np.column_stack([mask,mask]), pot)
+    pot = _np.ma.masked_where(~mask[...,_np.newaxis], pot)
     return (InterpCoords_2D[:,0].reshape(grid_size, grid_size),
             InterpCoords_2D[:,1].reshape(grid_size, grid_size),
             pot.reshape(grid_size, grid_size))
@@ -604,7 +604,7 @@ def csdMap(RealCoords, data, diameter_samples=200, n=(7,20), m=4,
     # mask all points outside the hull of existing Coordinates
     mask = _insideHull(InterpCoords_2D, RealCoords_2D[
         _np.all(_np.isfinite(RealCoords_2D),1)][hull.vertices])
-    pot = _np.ma.masked_where(~_np.column_stack([mask,mask]), pot)
+    pot = _np.ma.masked_where(~mask[...,_np.newaxis], pot)
     return (InterpCoords_2D[:,0].reshape(grid_size, grid_size),
             InterpCoords_2D[:,1].reshape(grid_size, grid_size),
             pot.reshape(grid_size, grid_size))
