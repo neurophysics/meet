@@ -89,8 +89,7 @@ class plotEEG:
         self.select = []
         # initialize the selector
         self.RS = RectangleSelector(ax=self.ax, onselect=self._on_select,
-                drawtype='box', useblit=True, interactive=True, button=1,
-                minspanx=5, minspany=5, spancoords='pixels')
+                drawtype='box', useblit=True, interactive=True, button=1)
         return
 
     def _PlotInitSignals(self):
@@ -147,8 +146,6 @@ class plotEEG:
             ha='left')
         self.fig.canvas.mpl_connect('resize_event', self._on_resize)
         self.fig.canvas.mpl_connect('key_press_event', self._on_key)
-        self.fig.canvas.mpl_connect('button_press_event',
-                self._recordMousePress)
         return
 
     def _on_resize(self, event):
@@ -267,12 +264,9 @@ class plotEEG:
         self.fig.canvas.draw()
         return
 
-    def _recordMousePress(self, event):
-        print 'Click at x: %f, y: %f' % (event.xdata, event.ydata)
-        self.clicks.append(_np.argmin(_np.abs(self.t-event.xdata)))
-        return
-
     def _on_select(self, eclick, erelease):
+        print 'Click at x: %f, y: %f' % (eclick.xdata, eclick.ydata)
+        self.clicks.append(_np.argmin(_np.abs(self.t-eclick.xdata)))
         pass
 
     def show(self):
