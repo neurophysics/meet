@@ -14,6 +14,7 @@ from . import _signal
 
 import scipy.constants as _const
 from matplotlib import pyplot as _plt
+from matplotlib.widgets import RectangleSelector
 _plt.ioff()
 from matplotlib.ticker import FuncFormatter as _FuncFormatter
 from matplotlib.widgets import Cursor as _Cursor
@@ -50,6 +51,8 @@ class plotEEG:
         Pos1 -> Go to start
         End -> Go to end
         LeftMouseClick -> saves the x coordinate in self.clicks
+        Selection -> Select an area
+        s -> store the x-coordinates of the selection in self.select
 
         Input:
         ------
@@ -81,7 +84,13 @@ class plotEEG:
         self.t_res = t_res
         self.title = title
         self._PlotInitSignals()
+        self.fig.canvas.draw()
         self.clicks = []
+        self.select = []
+        # initialize the selector
+        self.RS = RectangleSelector(ax=self.ax, onselect=self._on_select,
+                drawtype='box', useblit=True, interactive=True, button=1,
+                minspanx=5, minspany=5, spancoords='pixels')
         return
 
     def _PlotInitSignals(self):
@@ -121,9 +130,9 @@ class plotEEG:
         [self.fig.text(x = 0.01, y = 0.1 + (i+0.5)* 0.85/(self.p), s=s,
             ha='left', va='center', **_line_props[i%2])
             for i, s in enumerate(self.ylabels)]
-        #add cursor:
-        self._cursor = _Cursor(self.ax, useblit=True, color='r',
-                linewidth=2, linestyle='-', horizOn=False)
+        ##add cursor:
+        #self._cursor = _Cursor(self.ax, useblit=False, color='r',
+        #        linewidth=2, linestyle='-', horizOn=False)
         #add voltage reference bar
         self._bar_ax = self.fig.add_axes([0.01, 0.02, 0.05, 0.1],
                 frame_on=False)
@@ -217,6 +226,9 @@ class plotEEG:
         if event.key == 'home':
             #go to start
             self.change_t(new_t0 = 0, new_t_show = self.t_show)
+        if event.key == 'r':
+            print 'Saving rectangle'
+            self.select.append(self.RS.corners[0][:2])
         return
 
     def change_gain(self, new_offset):
@@ -259,6 +271,9 @@ class plotEEG:
         print 'Click at x: %f, y: %f' % (event.xdata, event.ydata)
         self.clicks.append(_np.argmin(_np.abs(self.t-event.xdata)))
         return
+
+    def _on_select(self, eclick, erelease):
+        pass
 
     def show(self):
         _plt.show()
