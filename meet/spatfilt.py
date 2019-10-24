@@ -11,12 +11,12 @@ Author & Contact
 Written by Gunnar Waterstraat
 email: gunnar[dot]waterstraat[at]charite.de
 """
-from __future__ import division
+
 from . import _np
 from . import _linalg
 from . import _signal
-from _cSPoC import *
-from _PCO import *
+from ._cSPoC import *
+from ._PCO import *
 
 def CSP(data1, data2, center=True):
     """
@@ -290,10 +290,10 @@ def bCSTP(trials1, trials2, num_iter=30, s_keep=2, t_keep=2,
     V = [_np.identity(n_dp1, dtype=trials1.dtype)]
     t_eigvals = []
     s_eigvals = []
-    for i in xrange(num_iter):
+    for i in range(num_iter):
         if verbose:
-            print 'Iteration %d of %d total iterations.' % (i+1,
-                    num_iter)
+            print('Iteration %d of %d total iterations.' % (i+1,
+                    num_iter))
         ######## get spatial filter ########
         #filter temporally
         temp1 = _np.tensordot(V[-1][:,:t_keep[i]], trials1,

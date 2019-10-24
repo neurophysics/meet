@@ -6,7 +6,7 @@ A citable reference is no ready yet, but (hopefully) soon.
 Hiddem submodule of the Modular EEg Toolkit - MEET for Python.
 (Imported by spatfilt module).
 """
-from __future__ import division
+
 from scipy.optimize import fmin_l_bfgs_b as _minimize
 
 if __name__ != '__main__':
@@ -92,7 +92,7 @@ def PCOa(a, Y, num=1, bestof=15):
     ######################
     # start optimization #
     ######################
-    for i in xrange(num):
+    for i in range(num):
         if i == 0:
             # get first filter
             # get best parameters and function values of each run
@@ -101,10 +101,10 @@ def PCOa(a, Y, num=1, bestof=15):
                                x0 = _np.random.random(py) * 2 -1,
                                args = (a,Y,-1,True,False),
                                m=100, approx_grad=False, iprint=0)[:2]
-                     for k in xrange(bestof)])
+                     for k in range(bestof)])
             # somehow, _minimize sometimes returns the wrong function value,
             # so this is re-dertermined here
-            for k in xrange(bestof):
+            for k in range(bestof):
                 optres[k,1] = _PCOa_obj_der(
                         optres[k,0],
                         a,Y,-1,False,False)
@@ -127,10 +127,10 @@ def PCOa(a, Y, num=1, bestof=15):
                                x0 = _np.random.random(py - i) * 2 -1,
                                args = (a,Yb,-1,True,False),
                                m=100, approx_grad=False, iprint=0)[:2]
-                     for k in xrange(bestof)])
+                     for k in range(bestof)])
             # somehow, _minimize sometimes returns the wrong function value,
             # so this is re-determined here
-            for k in xrange(bestof):
+            for k in range(bestof):
                 optres[k,1] = _PCOa_obj_der(
                         optres[k,0],
                         a,Yb,-1,False,False)
@@ -285,7 +285,7 @@ if __name__ == "__main__":
     # gradients
     dx = 1E-10
     dw = _np.zeros([N_ch,N_ch],float)
-    dw[range(N_ch), range(N_ch)] += dx
+    dw[list(range(N_ch)), list(range(N_ch))] += dx
     vlen_a_fd_grad = _np.array([(
         _PCOa_obj_der(w+dw_now, a, x[:,marker],-1, False) -
         _PCOa_obj_der(w       , a, x[:,marker], -1, False)) /

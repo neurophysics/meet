@@ -1,4 +1,4 @@
-This is the Modular EEg Toolkit (MEET) for Python 2.
+This is the Modular EEg Toolkit (MEET) for Python 3.
 
 ************************************************************************
 ***Disclosure:                                                       ***
@@ -11,12 +11,12 @@ This is the Modular EEg Toolkit (MEET) for Python 2.
 ***condition mustn't rely on this software.                          ***
 ************************************************************************
 
-Only Python 2 is supported at the moment, however modifications should
-be easy to do.
+Starting with Version 20191023, Python 2 support is dropped and
+transitioned to Python 3
 
 Dependencies:
 -------------
--Python 2
+-Python >= 3
 -Numpy
 -Scipy
 -Matplotlib

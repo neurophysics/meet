@@ -14,7 +14,7 @@ This module implements some spatial filters such as CSP, CCA, CCAvReg,
 bCSTP and QCA.
 """
 
-from __future__ import division
+
 from . import _np #numpy
 from . import _signal #scipy.signal
 from . import _linalg #scipy.linalg
@@ -189,7 +189,7 @@ def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15, x_ind=None, y_ind=None):
     if opt == 'max': sign = -1
     else: sign = 1
     # start optimization
-    for i in xrange(num):
+    for i in range(num):
         if i == 0:
             # get first pair of filters
             # get best parameters and function values of each run
@@ -198,10 +198,10 @@ def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15, x_ind=None, y_ind=None):
                                x0 = _np.random.random(px+py) * 2 -1,
                                args = (X, Y, sign, log, x_ind, y_ind),
                                m=100, approx_grad=False, iprint=1)[:2]
-                     for k in xrange(bestof)])
+                     for k in range(bestof)])
             # somehow, _minimize sometimes returns the wrong function value,
             # so this is re-dertermined here
-            for k in xrange(bestof):
+            for k in range(bestof):
                 optres[k,1] = _env_corr(
                         optres[k,0],
                         X, Y, sign, log, x_ind, y_ind)[0]
@@ -227,10 +227,10 @@ def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15, x_ind=None, y_ind=None):
                                x0 = _np.random.random(px+py-2*i) * 2 -1,
                                args = (Xb, Yb, sign, log, x_ind, y_ind),
                                m=100, approx_grad=False, iprint=1)[:2]
-                               for k in xrange(bestof)])
+                               for k in range(bestof)])
             # somehow, _minimize sometimes returns the wrong function value,
             # so this is re-dertermined here
-            for k in xrange(bestof):
+            for k in range(bestof):
                 optres[k,1] = _env_corr(
                         optres[k,0],
                         Xb, Yb, sign, log, x_ind, y_ind)[0]
@@ -522,7 +522,7 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15, x_ind=None):
     else: raise ValueError("\"opt\" must be \"max\", " +\
             "\"min\" or \"zero\"")
     # start optimization
-    for i in xrange(num):
+    for i in range(num):
         if i == 0:
             # get first filter
             # get best parameters and function values of each run
@@ -532,10 +532,10 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15, x_ind=None):
                                args = (X[...,tau[0]], X[...,tau[1]], sign, log,
                                x_ind, x_ind),
                                m=100, approx_grad=False, iprint=1)[:2]
-                     for k in xrange(bestof)])
+                     for k in range(bestof)])
             # somehow, _minimize sometimes returns the wrong function value,
             # so this is re-dertermined here
-            for k in xrange(bestof):
+            for k in range(bestof):
                 optres[k,1] = _env_corr_same(
                         optres[k,0],
                         X[...,tau[0]], X[...,tau[1]], sign, log,
@@ -563,10 +563,10 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15, x_ind=None):
                                args = (Xb[...,tau[0]], Xb[...,tau[1]], sign, log,
                                x_ind, x_ind),
                                m=100, approx_grad=False, iprint=1)[:2]
-                               for k in xrange(bestof)])
+                               for k in range(bestof)])
             # somehow, _minimize sometimes returns the wrong function value,
             # so this is re-dertermined here
-            for k in xrange(bestof):
+            for k in range(bestof):
                 optres[k,1] = _env_corr_same(
                         optres[k,0],
                         Xb[...,tau[0]], Xb[...,tau[1]], sign, log,
@@ -820,7 +820,7 @@ def cSPoAvgC(X, opt='max', num=1, log=True, bestof=15):
     else: raise ValueError("\"opt\" must be \"max\", " +\
             "\"min\" or \"zero\"")
     # start optimization
-    for i in xrange(num):
+    for i in range(num):
         if i == 0:
             # get first filter
             # get best parameters and function values of each run
@@ -829,10 +829,10 @@ def cSPoAvgC(X, opt='max', num=1, log=True, bestof=15):
                                x0 = _np.random.random(px) * 2 -1,
                                args = (X, sign, log), m=100,
                                    approx_grad=False, iprint=1)[:2]
-                     for k in xrange(bestof)])
+                     for k in range(bestof)])
             # somehow, _minimize sometimes returns the wrong function value,
             # so this is re-dertermined here
-            for k in xrange(bestof):
+            for k in range(bestof):
                 optres[k,1] = _env_corr_avg(
                         optres[k,0],
                         X, sign, log)[0]
@@ -858,10 +858,10 @@ def cSPoAvgC(X, opt='max', num=1, log=True, bestof=15):
                                x0 = _np.random.random(px-i) * 2 -1,
                                args = (Xb, sign, log),
                                m=100, approx_grad=False, iprint=1)[:2]
-                               for k in xrange(bestof)])
+                               for k in range(bestof)])
             # somehow, _minimize sometimes returns the wrong function value,
             # so this is re-dertermined here
-            for k in xrange(bestof):
+            for k in range(bestof):
                 optres[k,1] = _env_corr_avg(
                         optres[k,0],
                         Xb, sign, log)[0]

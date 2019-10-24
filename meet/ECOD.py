@@ -17,7 +17,7 @@ Matlab source code for trap2tri:
 https://github.com/carandraug/testmatrix/blob/master/Test%20Matrix%20Toolbox/trap2tri.m
 """
 
-from __future__ import division
+
 if __name__ != "__main__":
     from . import _np
     from . import _linalg
@@ -136,7 +136,7 @@ def trap2tri(L, overwrite=False, check=False):
         L = L.copy() # if not done, L will be overwritten
     Q = _np.eye(n)
     if r != n:
-        for j in xrange(r-1,-1,-1):
+        for j in range(r-1,-1,-1):
             x = (L[j:,j]).copy().reshape(-1,1)
             x[1:r-j] = 0 # these elements are left unchanged
             s = _np.sqrt(_np.sum(x**2))*(

@@ -11,7 +11,7 @@ Gunnar Waterstraat
 gunnar[dot]waterstraat[at]charite.de
 '''
 
-from __future__ import division
+
 from . import _np
 from . import _signal
 

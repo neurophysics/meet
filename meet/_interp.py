@@ -9,7 +9,7 @@ Gunnar Waterstraat
 gunnar[dot]waterstraat[at]charite.de
 '''
 
-from __future__ import division
+
 from . import _np
 
 def _get_akima_slopes(x,y, x_index):
@@ -46,7 +46,7 @@ def akima(x,y):
     x1_index = _np.where(_np.diff(x) !=1)[0] # the points before
     x2_index = x1_index + 1 # the points after
     xi = [_np.arange(x[x1_index[k]]+1, x[x2_index[k]], 1) for k in
-         xrange(len(x1_index))] # the points to be interpolated
+         range(len(x1_index))] # the points to be interpolated
     # get all relevant parameters
     t1 = _get_akima_slopes(x, y, x1_index)
     t2 = _get_akima_slopes(x, y, x2_index)
@@ -59,7 +59,7 @@ def akima(x,y):
     p2 = (3*(y2 - y1)/(x2 - x1) - 2*t1 - t2) / (x2 - x1)
     p3 = (t1 + t2 -2*(y2 - y1)/(x2-x1)) / (x2-x1)**2
     yi = [p0[k] + p1[k]*(xi[k]-x1[k]) + p2[k]*(xi[k]-x1[k])**2 + p3[k]*
-            (xi[k]-x1[k])**3 for k in xrange(len(x1_index))]
+            (xi[k]-x1[k])**3 for k in range(len(x1_index))]
     return _np.hstack(yi)
 
 def mchi(x,y):
@@ -69,7 +69,7 @@ def mchi(x,y):
     x1_index = _np.where(_np.diff(x) !=1)[0] # the points before
     x2_index = x1_index + 1 # the points after
     xi = [_np.arange(x[x1_index[k]]+1, x[x2_index[k]], 1) for k in
-         xrange(len(x1_index))] # the points to be interpolated
+         range(len(x1_index))] # the points to be interpolated
     # get all relevant parameters
     ###
     t1 = _get_mchi_slopes(x, y, x1_index)
@@ -83,5 +83,5 @@ def mchi(x,y):
     p2 = (3*(y2 - y1)/(x2 - x1) - 2*t1 - t2) / (x2 - x1)
     p3 = (t1 + t2 -2*(y2 - y1)/(x2-x1)) / (x2-x1)**2
     yi = [p0[k] + p1[k]*(xi[k]-x1[k]) + p2[k]*(xi[k]-x1[k])**2 + p3[k]*
-            (xi[k]-x1[k])**3 for k in xrange(len(x1_index))]
+            (xi[k]-x1[k])**3 for k in range(len(x1_index))]
     return _np.hstack(yi)

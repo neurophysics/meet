@@ -28,12 +28,12 @@ Author & Contact
 Written by Gunnar Waterstraat
 email: gunnar[dot]waterstraat[at]charite.de
 '''
-from __future__ import division
+
 
 from . import _np
 from . import _linalg
 
-try: from _dot_new import dot as _dot
+try: from ._dot_new import dot as _dot
 except: _dot = _np.dot
 
 def accuracy(conf_matrix):
@@ -243,13 +243,13 @@ def ssk_cv(data, labels, folds=3):
     #find the number of items of each class in each fold
     start_stop = _np.array([_np.round(_np.linspace(ci[i], ci[i+1],
         folds+1, endpoint=True),0).astype(int)
-        for i in xrange(len(cc))])
+        for i in range(len(cc))])
     # start_stop is a ny x kfolds + 1 array with start and stop indices
     # for each class and fold
     result = []
-    for f in xrange(folds):
+    for f in range(folds):
         temp = [rarray[start_stop[i,f] : start_stop[i, f+1]]
-                for i in xrange(len(cc))]
+                for i in range(len(cc))]
         result.append(list(chain.from_iterable(temp)))
     return result 
 
@@ -461,10 +461,10 @@ class ClassELM:
         # cut data into folds
         partitions = get_folds(data, labels, folds)
         # partitions is a list with sublists of indices of each fold
-        print 'Running Cross-Validation'
+        print('Running Cross-Validation')
         result = _np.ones(C_array.shape, float)
         for n,C in enumerate(C_array):
-            for k in xrange(folds):
+            for k in range(folds):
                 test = partitions[k] # fold k is used to test
                 train = list(chain.from_iterable(partitions[:k] +
                     partitions[k+1:]))
@@ -480,8 +480,8 @@ class ClassELM:
                 conf_matrix = get_conf_matrix(labels[test], est_labels, class_ratios=class_ratios)
                 result[n] = result[n] * precision_func(conf_matrix)
             if ((verbose) and (n % 1 == 0)):
-                print 'Finished %d of %d Cross-Validations.' % (n+1,
-                        len(C_array))
+                print('Finished %d of %d Cross-Validations.' % (n+1,
+                        len(C_array)))
         result = result**(1./folds)
         # fix C as the C with the best cv-result
         try:
@@ -489,10 +489,10 @@ class ClassELM:
         except:
             C = C_array[0]
         # now train the network with the final C
-        print 'Cross-Validation finished, Training final network'
+        print('Cross-Validation finished, Training final network')
         self.train(data, labels, C=C, mem_size=mem_size, scale = False,
                 weights=self._w)
-        print 'Network trained'
+        print('Network trained')
         return result
         
     def train(self, data, labels, C, scale=True, weights = True,
@@ -656,7 +656,7 @@ class ClassELM:
         else:
             HTT = _np.zeros((self.L, self.m), HTH.dtype)
         # run in batches
-        for k in xrange(num_batches):        
+        for k in range(num_batches):        
             temp = self._get_HTH_HTT(data =
                     data[borders[k]:borders[k+1]],
                     labels=labels[borders[k]:borders[k+1]])
@@ -724,7 +724,7 @@ class ClassELM:
             out = _np.empty((n, self.m), float)
         else:
             out = _np.empty((n), float)
-        for k in xrange(len(borders)-1):
+        for k in range(len(borders)-1):
             out[borders[k]:borders[k+1]] = self.kernel(
                     data[borders[k]:borders[k+1]],
                     self.a, self.b).T.dot(self._beta)

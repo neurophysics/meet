@@ -9,7 +9,6 @@ Gunnar Waterstraat
 gunnar[dot]waterstraat[at]charite.de
 '''
 
-from __future__ import division
 from . import _np
 from . import _path
 from . import _packdir
@@ -95,7 +94,7 @@ def readBinary(fname,num_channels,channels='all',readnum_dp='all',
     if (((num_channels*readnum_dp) % bytequot == 0) or
          (num_channels*readnum_dp) < bytequot):
         #if the dataset can be read in complete batches
-        for i in xrange(batchnum):
+        for i in range(batchnum):
             #read all channels
             data_temp=_np.fromfile(
               file = fd,
@@ -108,7 +107,7 @@ def readBinary(fname,num_channels,channels='all',readnum_dp='all',
         fd.close()
     else:
         #if partial batches are needed at the end
-        for i in xrange(batchnum-1):
+        for i in range(batchnum-1):
             #read all channels
             data_temp=_np.fromfile(
               file = fd,
@@ -175,13 +174,13 @@ def interpolateEEG(data, markers, win, interpolate_type='mchs'):
         data[:,interpolpts] = f(interpolpts)
     elif interpolate_type in ['mchs', 'akima']:
         if interpolate_type == 'akima':
-            from _interp import akima as interp
+            from ._interp import akima as interp
         elif interpolate_type == 'mchs':
-            from _interp import mchi as interp
+            from ._interp import mchi as interp
         if data.ndim == 1:
             data[interpolpts] = interp(x, data[have_indices])
         elif data.ndim == 2:
-            for ch in xrange(data.shape[0]):
+            for ch in range(data.shape[0]):
                 data[ch, interpolpts] = interp(x,
                         data[ch, have_indices])
     return data
@@ -233,12 +232,12 @@ def epochEEG(data, marker, win):
     #omit marker that would allow only for incomplete windows
     if (marker[0] + win[0]) < 0:
         marker = marker[marker+win[0] > 0]
-        print ('Warning: Marker had to be ommited since for some' +
-               'marker + win[0] < 0')
+        print(('Warning: Marker had to be ommited since for some' +
+               'marker + win[0] < 0'))
     if (marker[-1] + win[1]) >= n:
         marker = marker[marker+win[1] < n]
-        print ('Warning: Marker had to be ommited since for some' +
-               'marker + win[1] >= len(data)')
+        print(('Warning: Marker had to be ommited since for some' +
+               'marker + win[1] >= len(data)'))
     indices = _np.array([_np.arange(m + win[0], m+win[1], 1)
                          for m in marker])
     result = data.T[indices].T

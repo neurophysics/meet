@@ -43,7 +43,7 @@ Gunnar Waterstraat
 gunnar[dot]waterstraat[at]charite.de
 '''
 
-from __future__ import division
+
 from . import _np
 from . import _path
 from . import _packdir
@@ -52,7 +52,7 @@ from scipy.spatial import ConvexHull as _hull
 from matplotlib import path as _mpath
 
 # ECOD is used to solve linear equations
-from ECOD import ECOD_LS as _solve
+from .ECOD import ECOD_LS as _solve
 
 from numpy.linalg import cond as _cond
 
@@ -202,7 +202,7 @@ def getStandardCoordinates(elecnames,fname='standard'):
             dtype=float).mean()
     z0 = _np.array([coords['T8'][2],coords['T7'][2]],dtype=float).mean()
     # move the electrodes accordingly
-    for key in coords.iterkeys():
+    for key in coords.keys():
         coords[key] = _np.array(coords[key],dtype=float)
         coords[key][0] -= x0
         coords[key][1] -= y0
@@ -253,7 +253,7 @@ def getChannelNames(fname):
     elecnames = dict([(row[0].upper(),int(row[1])) 
         for row in filereader])
     from operator import itemgetter
-    elecnames = sorted(elecnames.iteritems(), key=itemgetter(1))
+    elecnames = sorted(iter(elecnames.items()), key=itemgetter(1))
     return [item[0] for item in elecnames]
 
 def projectCoordsOnSphere(coords):
@@ -434,7 +434,7 @@ def _sphereSpline(data, G_hh, G_hw=None, H_hw=None, smooth=0,
         float(buffersize*1024**2)))
     delims = _np.linspace(0, n, num_batches+1, endpoint=True).astype(int)
     #add smoothing parameter to G
-    G_hh[range(p), range(p)] = G_hh[range(p), range(p)] + smooth
+    G_hh[list(range(p)), list(range(p))] = G_hh[list(range(p)), list(range(p))] + smooth
     #change g to solve matrix system
     G_hh = _np.hstack([_np.ones([G_hh.shape[0],1], G_hh.dtype),
         G_hh])
@@ -442,7 +442,7 @@ def _sphereSpline(data, G_hh, G_hw=None, H_hw=None, smooth=0,
         G_hh])
     G_hh[0,0] = 0
     out = []
-    for i in xrange(num_batches):
+    for i in range(num_batches):
         # check if G_hh is ill-conditioned
         if _cond(G_hh) >= 1./_np.finfo(_np.float64).eps:
             raise UserWarning('Interpolation problem is ill-conditioned.' +

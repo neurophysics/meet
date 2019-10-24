@@ -49,7 +49,7 @@ Example for a dyadic S transform:
         extent=[t[0], t[-1], f[0], f[-1]]) #plot the result
 '''
 
-from __future__ import division 
+ 
 from . import _np
 from . import _signal
 from . import _sci
@@ -130,7 +130,7 @@ def gft(sig, window='gaussian', axis=-1, sampling = 'full',
     sig = _np.fft.fft(sig, axis=0) # get fft of signal
     #Step2: Sampling Scheme
     x,y = sampling(N)
-    for k in xrange(len(y)):
+    for k in range(len(y)):
         if y[k] != 0:
             sig_r = _np.roll(sig, -y[k], axis=0)
             win = window(N, y[k])
@@ -217,7 +217,7 @@ def interpolate_gft(Coords, S, IM_shape, data_len, kindf = 'nearest',
         # spectrum
         wanted_freqs = _np.linspace(-int(data_len / 2),
                 int(data_len / 2), IM_shape[0])
-    for k in xrange(len(f)):
+    for k in range(len(f)):
         x = Coords[1,f_indices[k]:f_indices[k+1]]
         y = S[f_indices[k]:f_indices[k+1]]
         if x[0] !=0:
@@ -229,7 +229,7 @@ def interpolate_gft(Coords, S, IM_shape, data_len, kindf = 'nearest',
         interfunc = _sci.interp1d( x=x, y=y, kind=kindt)
         IM_temp[k] = interfunc(wanted_times)
         #IM_temp[k] = S[f_indices[k]:f_indices[k+1]]
-    for k in xrange(IM_shape[1]):
+    for k in range(IM_shape[1]):
         interfunc = _sci.interp1d(x = f[f_order],
                 y = IM_temp[f_order,k], kind = kindf )
         IM[:,k] = interfunc(wanted_freqs.clip(f.min(),f.max()))

@@ -8,7 +8,7 @@ Author:
 Gunnar Waterstraat
 gunnar[dot]waterstraat[at]charite.de
 '''
-from __future__ import division
+
 from . import _np
 from . import _signal
 
@@ -27,7 +27,7 @@ _x_axis_formatter = _FuncFormatter(_seconds_formatter)
 _line_props = [{'color': 'k'}, {'color': 'r'}]
 
 #detect screen resolution
-import Tkinter as _Tk
+import tkinter as _Tk
 _root = _Tk.Tk()
 _res =  (_root.winfo_screenwidth() / float(_root.winfo_screenmmwidth())
         * 1000 * _const.inch)
@@ -114,7 +114,7 @@ class plotEEG:
         self._ylocs = _np.arange(2, 4*self.p + 2, 4) * self._offset
         self.lines = [self.ax.plot(self.t[self.t0:self.t1], d_plot[i] +
             self._ylocs[i], lw=1.0, ls='-', **_line_props[i%2])[0]
-            for i in xrange(self.p)]
+            for i in range(self.p)]
         self.ax.set_ylim([self._ymin, self._ymax])
         self.ax.set_xlim([self.t[self.t0], self.t[self.t1]])
         self.ax.tick_params(axis='both', bottom=True, top=True,
@@ -224,7 +224,7 @@ class plotEEG:
             #go to start
             self.change_t(new_t0 = 0, new_t_show = self.t_show)
         if event.key == 'r':
-            print 'Saving rectangle'
+            print('Saving rectangle')
             self.select.append(self.RS.corners[0][:2])
         return
 
@@ -265,7 +265,7 @@ class plotEEG:
         return
 
     def _on_select(self, eclick, erelease):
-        print 'Click at x: %f, y: %f' % (eclick.xdata, eclick.ydata)
+        print('Click at x: %f, y: %f' % (eclick.xdata, eclick.ydata))
         self.clicks.append(_np.argmin(_np.abs(self.t-eclick.xdata)))
         pass
 
