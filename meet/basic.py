@@ -163,7 +163,7 @@ def interpolateEEG(data, markers, win, interpolate_type='mchs'):
            [ 10.   ,  11.   ,  12.   ,  13.   ,  13.625,  15.   ,  16.375,
              17.   ,  18.   ,  19.   ]])
     """
-    interpolpts = [_np.arange(m+win[0], m+win[1],1) for m in markers] 
+    interpolpts = [_np.arange(m+win[0], m+win[1],1) for m in markers]
     interpolpts = _np.unique(_np.ravel(interpolpts))
     have_indices = _np.ones(data.shape[-1],bool)
     have_indices[interpolpts] = False
@@ -186,7 +186,7 @@ def interpolateEEG(data, markers, win, interpolate_type='mchs'):
     return data
 
 
-def epochEEG(data, marker, win):
+def epochEEG(data, marker, win, verbose=False):
     """
     Arange the dataset into trials (=epochs) according to the marker and
     window.
@@ -201,6 +201,7 @@ def epochEEG(data, marker, win):
     -- marker - iterable - the marker
     -- win - iterable of len 2 - determing the start and end of epchos
              in dp (win[0] is in, win[1] is out of the window)
+    -- verbose - bool - whether to print status messages
 
     Output:
     -------
@@ -232,12 +233,14 @@ def epochEEG(data, marker, win):
     #omit marker that would allow only for incomplete windows
     if (marker[0] + win[0]) < 0:
         marker = marker[marker+win[0] > 0]
-        print(('Warning: Marker had to be ommited since for some' +
-               'marker + win[0] < 0'))
+        if verbose:
+            print(('Warning: Marker had to be ommited since for some' +
+                'marker + win[0] < 0'))
     if (marker[-1] + win[1]) >= n:
         marker = marker[marker+win[1] < n]
-        print(('Warning: Marker had to be ommited since for some' +
-               'marker + win[1] >= len(data)'))
+        if verbose:
+            print(('Warning: Marker had to be ommited since for some' +
+                'marker + win[1] >= len(data)'))
     indices = _np.array([_np.arange(m + win[0], m+win[1], 1)
                          for m in marker])
     result = data.T[indices].T
@@ -249,7 +252,7 @@ def epochEEG(data, marker, win):
 def calculateRMS(data, axis=-1):
     """
     Calculate rms value of the input data along the indicated axis
-    
+
     Input:
     ------
     -- data - numpy array - input data
@@ -300,7 +303,7 @@ def getMarker(marker, width=50, mindist=100):
     >>> x[600:800] = -1
     >>> getMarker(x)
     array([200, 400,  600,  800])
-    """ 
+    """
 
     # normalize by local median and mad
     # add some random noise to prevent the median from being zero later
