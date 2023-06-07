@@ -6,7 +6,7 @@ except ImportError:
     from distutils.core import setup
 
 setup(name='meet',
-      version='20220104',
+      version='20230607',
       description='Modular EEg Toolkit (MEET)',
       author='Gunnar Waterstraat',
       author_email='gunnar.waterstraat@charite.de',

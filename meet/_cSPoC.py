@@ -56,7 +56,7 @@ def pattern_from_filter(filter, X):
 def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15, x_ind=None, y_ind=None):
     """
     canonical Soure Power Correlation analysis (cSPoC)
-    
+
     For the datasets X and Y, find a pair of linear filters wx and wy, such
     that the correlation of the amplitude envelopes wx.T.dot(X) and
     wy.T.dot(Y) is maximized.
@@ -82,14 +82,14 @@ def cSPoC(X, Y, opt='max', num=1, log=True, bestof=15, x_ind=None, y_ind=None):
     If X and/or Y are of complex type, it is assumed that these are the
     analytic representations of X and Y, i.e., the hilbert transform was
     applied before.
-    
+
     The filters are in the columns of the filter matrices Wx and Wy,
     for 2d input the data can be filtered as:
-    
+
     np.dot(Wx.T, X)
-    
+
     for 3d input:
-    
+
     np.tensordot(Wx, X, axes=(0,0))
 
     Input:
@@ -382,7 +382,7 @@ def _env_corr(wxy, Xa, Ya, sign=-1, log=True, x_ind=None, y_ind=None):
 def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15, x_ind=None):
     """
     canonical Soure Power Auto-Correlation analysis (cSPoAC)
-    
+
     For the dataset X, find a linear filters wx, such
     that the correlation of the amplitude envelopes wx.T.dot(X[...,:-tau])
     and wx.T.dot(X[...,tau:]) is maximized, i.e. it seeks a spatial filter
@@ -413,14 +413,14 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15, x_ind=None):
     inside the trial
     If X is of complex type, it is assumed that these is the analytic
     representations of X, i.e., the hilbert transform was applied before.
-    
+
     The filters are in the columns of the filter matrices Wx and Wy,
     for 2d input the data can be filtered as:
-    
+
     np.dot(Wx.T, X)
-    
+
     for 3d input:
-    
+
     np.tensordot(Wx, X, axes=(0,0))
 
     Input:
@@ -469,18 +469,18 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15, x_ind=None):
     #check input
     assert isinstance(X, _np.ndarray), "X must be numpy array"
     assert (X.ndim ==2 or X.ndim==3), "X must be 2D or 3D numpy array"
-    if isinstance(X, _np.ndarray):
+    if isinstance(tau, _np.ndarray):
         try:
             X[...,tau[0]]
             X[...,tau[1]]
         except:
             raise ValueError("""
                     If tau is an array, tau[0] and tau[1] must be subarrays
-                    of valid indices to X defining a certain lag, i.e., 
+                    of valid indices to X defining a certain lag, i.e.,
                     the correlation between X[...,tau[0]] and X[...,tau[1]]
                      is optimized""")
     else:
-        assert isinstance(tau, int), "tau must be an array integer-valued"
+        assert isinstance(tau, int), "tau must be integer-valued"
         assert ((tau > 0) and (tau < (X.shape[-1]-1))
             ), "tau must be >0 and smaller than the last dim of X " +\
                "minus 1."
@@ -708,7 +708,7 @@ def _env_corr_same(wxy, Xa, Ya, sign=-1, log=True, x_ind=None, y_ind=None):
     # denominator of correlation
     denom = _np.sqrt(_np.mean(x_env**2) * _np.mean(y_env**2))
     # derivative of denominator
-    denom_d = ( 
+    denom_d = (
      (_np.mean(x_env*envx_derwx,1)*_np.mean(y_env**2) +
       _np.mean(x_env**2)*_np.mean(y_env*envy_derwy,1)
      ) /
@@ -725,7 +725,7 @@ def _env_corr_same(wxy, Xa, Ya, sign=-1, log=True, x_ind=None, y_ind=None):
 def cSPoAvgC(X, opt='max', num=1, log=True, bestof=15):
     """
     canonical Soure Power Average Correlation analysis (cSPoAvgC)
-    
+
     For the dataset X, find a linear filters wx, such
     that the average correlation of the amplitude envelopes of wx.T.dot(X)
     and (wx.T.dot(X)).mean(-1) is maximized, i.e. it seeks a spatial filter
@@ -743,17 +743,17 @@ def cSPoAvgC(X, opt='max', num=1, log=True, bestof=15):
     ------
     Dataset X must be a 3d a array of shape
     (channels x datapoints x trials).
-    
+
     If log == True, then the log transform is taken before the average
     inside the trial
-    
+
     If X is of complex type, it is assumed that these is the analytic
     representations of X, i.e., the hilbert transform was applied before.
-    
+
     The filters are in the columns of the filter matrices Wx
-    
-    The input data can be filtered as:    
-    
+
+    The input data can be filtered as:
+
     np.tensordot(Wx, X, axes=(0,0))
 
     Input:
@@ -953,7 +953,7 @@ def _env_corr_avg(wxy, Xa, sign=-1, log=True):
     denom = _np.sqrt(_np.mean(x_env**2,0) *
             _np.mean(x_env.mean(-1)**2,0))
     # derivative of denominator
-    denom_d = ( 
+    denom_d = (
      (_np.mean(x_env*envx_derwx,1)*_np.mean(x_env.mean(-1)**2,0)) +
      _np.mean(x_env**2,0)*_np.mean(x_env.mean(-1)*
          envx_derwx.mean(-1),1)[:,_np.newaxis]
