@@ -484,9 +484,9 @@ def cSPoAC(X, tau=1, opt='max', num=1, log=True, bestof=15, x_ind=None):
         assert ((tau > 0) and (tau < (X.shape[-1]-1))
             ), "tau must be >0 and smaller than the last dim of X " +\
                "minus 1."
-        tau = np.array([
-            np.arange(0,X.shape[-1]-tau,1),
-            np.arange(tau, X.shape[-1],1)
+        tau = _np.array([
+            _np.arange(0,X.shape[-1]-tau,1),
+            _np.arange(tau, X.shape[-1],1)
             ])
     assert opt in ['max', 'min', 'zero'], "\"opt\" must be \"max\", " +\
             "\"min\" or \"zero\""
